@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: sbt
+
+      - name: Check formatting (scalafmt)
+        run: sbt scalafmtCheckAll
+
+      - name: Check style (scalastyle)
+        run: sbt scalastyle
+
+  docs:
+    name: Generate Scaladocs
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: sbt
+
+      - name: Generate Scaladocs
+        run: sbt doc
+
+  test-spark3:
+    name: Test (Spark 3 / Scala 2.12)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: sbt
+
+      - name: Run tests with coverage
+        run: sbt coverage "project core2_12" test "project runtimespark32_12" test "project runnerspark32_12" test "project examplespark32_12" test coverageReport
+
+      - name: Check coverage minimum
+        run: sbt "project core2_12" coverageAggregate
+
+  test-spark4:
+    name: Test (Spark 4 / Scala 2.13)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: sbt
+
+      - name: Run tests with coverage
+        run: sbt coverage "project core" test "project runtimespark4" test "project runnerspark4" test "project examplespark4" test coverageReport
+
+      - name: Check coverage minimum
+        run: sbt "project core" coverageAggregate
