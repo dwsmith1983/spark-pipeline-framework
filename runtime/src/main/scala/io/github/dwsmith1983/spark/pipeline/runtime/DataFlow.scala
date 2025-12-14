@@ -8,7 +8,7 @@ import org.apache.logging.log4j.{LogManager, Logger}
  *
  * DataFlow combines:
  * - [[SparkSessionWrapper]] - provides access to `spark` session
- * - [[PipelineComponent]] - provides the `run()` contract
+ * - `PipelineComponent` - provides the `run()` contract
  * - Log4j2 logging via `logger`
  *
  * This is the primary trait that user pipeline components should extend.
@@ -48,13 +48,13 @@ import org.apache.logging.log4j.{LogManager, Logger}
  *   import spark.implicits._
  *
  *   override def run(): Unit = {
- *     logger.info(s"Reading from table: ${conf.inputTable}")
+ *     logger.info(s"Reading from table: $${conf.inputTable}")
  *
  *     val df = spark.table(conf.inputTable)
  *       .filter($"active" === true)
  *       .select("id", "name", "value")
  *
- *     logger.info(s"Writing to: ${conf.outputPath}")
+ *     logger.info(s"Writing to: $${conf.outputPath}")
  *     df.write
  *       .format(conf.writeFormat)
  *       .mode("overwrite")
