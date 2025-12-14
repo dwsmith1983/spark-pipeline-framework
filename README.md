@@ -24,14 +24,14 @@ A configuration-driven framework for building Spark pipelines with HOCON config 
 
 ```scala
 // build.sbt
-libraryDependencies += "com.example" %% "spark-pipeline-runtime-spark3" % "0.1.0"
+libraryDependencies += "io.github.dwsmith1983" %% "spark-pipeline-runtime-spark3" % "0.1.0"
 ```
 
 ### 2. Create a pipeline component
 
 ```scala
-import com.example.spark.pipeline.config.ConfigurableInstance
-import com.example.spark.pipeline.runtime.DataFlow
+import io.github.dwsmith1983.spark.pipeline.config.ConfigurableInstance
+import io.github.dwsmith1983.spark.pipeline.runtime.DataFlow
 import pureconfig._
 import pureconfig.generic.auto._
 
@@ -85,7 +85,7 @@ sbt package
 
 # Deploy with spark-submit
 spark-submit \
-  --class com.example.spark.pipeline.runner.SimplePipelineRunner \
+  --class io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner \
   --jars /path/to/my-pipeline.jar \
   /path/to/spark-pipeline-runner-spark3_2.12.jar \
   -Dconfig.file=/path/to/pipeline.conf
@@ -95,7 +95,7 @@ spark-submit \
 
 | Artifact | Spark | Scala | Java |
 |----------|-------|-------|------|
-| `*-spark3_2.12` | 3.5.3 | 2.12.18 | 17+ |
+| `*-spark3_2.12` | 3.5.7 | 2.12.18 | 17+ |
 | `*-spark4_2.13` | 4.0.1 | 2.13.12 | 17+ |
 
 ## Building the Framework

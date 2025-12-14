@@ -1,0 +1,29 @@
+# sbt options
+# These options are read by the sbt launcher
+
+# Use more threads for parallel compilation
+-Dsbt.task.timings=false
+
+# Ivy/Coursier settings (uses default location)
+# -Dsbt.coursier.home=~/.cache/coursier/v1
+
+# Faster startup - use coursier for dependency resolution
+-Dsbt.supershell=false
+
+# Color output (disable with -Dsbt.color=false for CI)
+-Dsbt.color=auto
+
+# Log level (debug, info, warn, error)
+-Dsbt.log.noformat=false
+
+# Enable file watching optimizations
+-Dsbt.watch.mode=auto
+
+# Repository settings (uncomment to use a mirror)
+# -Dsbt.repository.config=repositories
+
+# TLS settings for dependency resolution
+-Dhttps.protocols=TLSv1.2,TLSv1.3
+
+# Disable analytics
+-Dsbt.analytics=false

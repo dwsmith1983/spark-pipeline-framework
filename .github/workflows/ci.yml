@@ -19,6 +19,9 @@ jobs:
           java-version: 17
           cache: sbt
 
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
       - name: Check formatting (scalafmt)
         run: sbt scalafmtCheckAll
 
@@ -40,6 +43,9 @@ jobs:
           java-version: 17
           cache: sbt
 
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
       - name: Generate Scaladocs
         run: sbt doc
 
@@ -57,6 +63,9 @@ jobs:
           distribution: zulu
           java-version: 17
           cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Run tests with coverage
         run: sbt coverage "project core2_12" test "project runtimespark32_12" test "project runnerspark32_12" test "project examplespark32_12" test coverageReport
@@ -78,6 +87,9 @@ jobs:
           distribution: zulu
           java-version: 17
           cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Run tests with coverage
         run: sbt coverage "project core" test "project runtimespark4" test "project runnerspark4" test "project examplespark4" test coverageReport

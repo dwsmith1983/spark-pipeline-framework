@@ -1,0 +1,43 @@
+# SBT
+target/
+project/target/
+project/project/
+.sbt/
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# IDE - VS Code
+.vscode/
+
+# Metals / Bloop (Scala tooling)
+.metals/
+.bloop/
+.bsp/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Build artifacts
+*.jar
+*.class
+
+# Spark
+derby.log
+metastore_db/
+spark-warehouse/
+
+# Test output
+test-output/
