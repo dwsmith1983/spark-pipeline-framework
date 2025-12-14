@@ -1,0 +1,31 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Publish packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: sbt publish
