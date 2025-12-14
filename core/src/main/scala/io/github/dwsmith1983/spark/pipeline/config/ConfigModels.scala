@@ -31,7 +31,7 @@ case class PipelineConfig(
  * Example HOCON:
  * {{{
  * {
- *   instance-type = "com.example.MyComponent"
+ *   instance-type = "com.yourcompany.MyComponent"
  *   instance-name = "MyComponent(prod)"
  *   instance-config {
  *     input-table = "raw_data"

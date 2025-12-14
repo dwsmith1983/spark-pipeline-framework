@@ -15,7 +15,7 @@ package io.github.dwsmith1983.spark.pipeline
  *
  * Example user build.sbt:
  * {{{
- * libraryDependencies += "com.example" %% "spark-pipeline-runtime-spark3" % "0.1.0"
+ * libraryDependencies += "io.github.dwsmith1983" %% "spark-pipeline-runtime-spark3" % "0.1.0"
  * }}}
  */
 package object runtime
