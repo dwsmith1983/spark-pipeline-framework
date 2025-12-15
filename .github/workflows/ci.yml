@@ -73,6 +73,30 @@ jobs:
       - name: Check coverage minimum
         run: sbt "project core2_12" coverageAggregate
 
+  test-spark3-scala213:
+    name: Test (Spark 3 / Scala 2.13)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Run tests with coverage
+        run: sbt coverage "project core" test "project runtimespark3" test "project runnerspark3" test "project examplespark3" test coverageReport
+
+      - name: Check coverage minimum
+        run: sbt "project core" coverageAggregate
+
   test-spark4:
     name: Test (Spark 4 / Scala 2.13)
     runs-on: ubuntu-latest
