@@ -13,7 +13,7 @@ A configuration-driven framework for building Spark pipelines with HOCON config 
 - **Type-safe configuration** via PureConfig with automatic case class binding
 - **SparkSession management** from config files
 - **Dynamic component instantiation** via reflection (no compile-time coupling)
-- **Cross-compilation** support for Spark 3.x (Scala 2.12) and Spark 4.x (Scala 2.13)
+- **Cross-compilation** support for Spark 3.x (Scala 2.12, 2.13) and Spark 4.x (Scala 2.13)
 - **Clean separation** between framework and user code
 
 ## Modules
@@ -102,6 +102,7 @@ spark-submit \
 | Artifact | Spark | Scala | Java |
 |----------|-------|-------|------|
 | `*-spark3_2.12` | 3.5.7 | 2.12.18 | 17+ |
+| `*-spark3_2.13` | 3.5.7 | 2.13.12 | 17+ |
 | `*-spark4_2.13` | 4.0.1 | 2.13.12 | 17+ |
 
 ## Building the Framework

@@ -172,6 +172,14 @@ lazy val runtime = (projectMatrix in file("runtime"))
   )
   .customRow(
     scalaVersions = Seq(scala213),
+    axisValues = Seq(Spark3, VirtualAxis.jvm),
+    settings = Seq(
+      moduleName := "spark-pipeline-runtime-spark3",
+      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark35 % Provided
+    )
+  )
+  .customRow(
+    scalaVersions = Seq(scala213),
     axisValues = Seq(Spark4, VirtualAxis.jvm),
     settings = Seq(
       moduleName := "spark-pipeline-runtime-spark4",
@@ -191,6 +199,21 @@ lazy val runner = (projectMatrix in file("runner"))
   )
   .customRow(
     scalaVersions = Seq(scala212),
+    axisValues = Seq(Spark3, VirtualAxis.jvm),
+    settings = Seq(
+      moduleName := "spark-pipeline-runner-spark3",
+      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark35 % Provided,
+      assembly / mainClass := Some("io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner"),
+      assembly / assemblyJarName := s"spark-pipeline-runner-spark3_${scalaBinaryVersion.value}-${version.value}.jar",
+      assembly / assemblyMergeStrategy := {
+        case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+        case "reference.conf" => MergeStrategy.concat
+        case _ => MergeStrategy.first
+      }
+    )
+  )
+  .customRow(
+    scalaVersions = Seq(scala213),
     axisValues = Seq(Spark3, VirtualAxis.jvm),
     settings = Seq(
       moduleName := "spark-pipeline-runner-spark3",
@@ -232,6 +255,14 @@ lazy val example = (projectMatrix in file("example"))
   )
   .customRow(
     scalaVersions = Seq(scala212),
+    axisValues = Seq(Spark3, VirtualAxis.jvm),
+    settings = Seq(
+      moduleName := "spark-pipeline-example-spark3",
+      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark35 % Provided
+    )
+  )
+  .customRow(
+    scalaVersions = Seq(scala213),
     axisValues = Seq(Spark3, VirtualAxis.jvm),
     settings = Seq(
       moduleName := "spark-pipeline-example-spark3",
