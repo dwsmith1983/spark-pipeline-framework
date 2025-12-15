@@ -1,4 +1,10 @@
 # spark-pipeline-framework
+[![CI](https://github.com/dwsmith1983/spark-pipeline-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/dwsmith1983/spark-pipeline-framework/actions/workflows/ci.yml)
+[![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-published-brightgreen?logo=github)](https://github.com/dwsmith1983?tab=packages&repo_name=spark-pipeline-framework)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Scala Versions](https://img.shields.io/badge/scala-2.12%20%7C%202.13-blue)](https://www.scala-lang.org)
+[![Spark Versions](https://img.shields.io/badge/spark-3.5.x%20%7C%204.0.x-E25A1C)](https://spark.apache.org)
+[![Code style: scalafmt](https://img.shields.io/badge/code%20style-scalafmt-blue)](https://scalameta.org/scalafmt/)
 
 A configuration-driven framework for building Spark pipelines with HOCON config files and PureConfig.
 
