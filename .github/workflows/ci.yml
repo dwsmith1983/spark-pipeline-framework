@@ -92,10 +92,10 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Run tests with coverage
-        run: sbt coverage "project core2_13" test "project runtimespark32_13" test "project runnerspark32_13" test "project examplespark32_13" test coverageReport
+        run: sbt coverage "project core" test "project runtimespark3" test "project runnerspark3" test "project examplespark3" test coverageReport
 
       - name: Check coverage minimum
-        run: sbt "project core2_13" coverageAggregate
+        run: sbt "project core" coverageAggregate
 
   test-spark4:
     name: Test (Spark 4 / Scala 2.13)
@@ -116,7 +116,7 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Run tests with coverage
-        run: sbt coverage "project core2_13" test "project runtimespark4" test "project runnerspark4" test "project examplespark4" test coverageReport
+        run: sbt coverage "project core" test "project runtimespark4" test "project runnerspark4" test "project examplespark4" test coverageReport
 
       - name: Check coverage minimum
-        run: sbt "project core2_13" coverageAggregate
+        run: sbt "project core" coverageAggregate
