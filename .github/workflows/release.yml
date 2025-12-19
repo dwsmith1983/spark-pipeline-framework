@@ -35,4 +35,4 @@ jobs:
         run: |
           sbt 'set ThisBuild / publishConfiguration := publishConfiguration.value.withOverwrite(true)' \
               +publishSigned \
-              sonatypeCentralUpload
+              sonatypeCentralRelease
