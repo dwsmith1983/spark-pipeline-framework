@@ -243,16 +243,18 @@ lazy val runner = (projectMatrix in file("runner"))
   )
 
 // ============================================================================
-// Example Module - Shows how to use the framework (depends on runtime only)
+// Example Module - Shows how to use the framework
 // ============================================================================
 lazy val exampleModulePrefix = "spark-pipeline-example"
 
 lazy val example = (projectMatrix in file("example"))
-  .dependsOn(runtime)
+  .dependsOn(runtime, runner)
   .settings(
     name := "spark-pipeline-example",
     commonSettings,
-    publish / skip := true
+    publish / skip := true,
+    // Exclude DemoPipeline from coverage - it's a runnable demo with main()
+    coverageExcludedFiles := ".*DemoPipeline.*"
   )
   .customRow(
     scalaVersions = Seq(scala212),

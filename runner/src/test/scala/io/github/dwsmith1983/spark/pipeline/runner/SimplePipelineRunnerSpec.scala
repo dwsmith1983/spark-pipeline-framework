@@ -30,6 +30,8 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
     // Stop any existing SparkSession to ensure clean state for each test
     SparkSessionWrapper.stop()
     ExecutionTracker.reset()
+    HooksTracker.reset()
+    HooksTracker2.reset()
   }
 
   override def afterAll(): Unit =
@@ -510,7 +512,295 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
         session1 shouldBe theSameInstanceAs(session2)
       }
     }
+
+    // =========================================================================
+    // PIPELINE HOOKS TESTS
+    // =========================================================================
+
+    describe("pipeline hooks") {
+
+      it("should invoke beforePipeline and afterPipeline hooks") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+            app-name = "HooksTest"
+          }
+          pipeline {
+            pipeline-name = "Hooks Test Pipeline"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "HooksTracker"
+                instance-config { component-id = "hooks-test" }
+              }
+            ]
+          }
+        """)
+
+        SimplePipelineRunner.run(config, HooksTracker)
+
+        HooksTracker.events should contain("beforePipeline:Hooks Test Pipeline")
+        (HooksTracker.events should contain).allOf(
+          "beforeComponent:HooksTracker:0:1",
+          "afterComponent:HooksTracker:0:1"
+        )
+        HooksTracker.events.last should startWith("afterPipeline:Hooks Test Pipeline:Success")
+      }
+
+      it("should invoke onComponentFailure when component fails") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Failure Hooks Test"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailOnRunComponent"
+                instance-name = "FailingComponent"
+                instance-config { fail-message = "intentional failure" }
+              }
+            ]
+          }
+        """)
+
+        intercept[RuntimeException] {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        HooksTracker.events should contain("onComponentFailure:FailingComponent:0")
+        HooksTracker.events.exists(_.startsWith("afterPipeline:Failure Hooks Test:Failure")) shouldBe true
+      }
+
+      it("should invoke hooks in correct order for multi-component pipeline") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Multi Hook Test"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "First"
+                instance-config { component-id = "first" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Second"
+                instance-config { component-id = "second" }
+              }
+            ]
+          }
+        """)
+
+        SimplePipelineRunner.run(config, HooksTracker)
+
+        val events: List[String] = HooksTracker.events.toList
+
+        // Verify order
+        events.indexOf("beforePipeline:Multi Hook Test") should be < events.indexOf("beforeComponent:First:0:2")
+        events.indexOf("afterComponent:First:0:2") should be < events.indexOf("beforeComponent:Second:1:2")
+        events.indexOf("afterComponent:Second:1:2") should be < events.indexWhere(_.startsWith("afterPipeline"))
+      }
+
+      it("should work with PipelineHooks.compose") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Compose Test"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "ComposeTracker"
+                instance-config { component-id = "compose-test" }
+              }
+            ]
+          }
+        """)
+
+        val composedHooks: PipelineHooks = PipelineHooks.compose(HooksTracker, HooksTracker2)
+
+        SimplePipelineRunner.run(config, composedHooks)
+
+        // Both trackers should have received events
+        HooksTracker.events should contain("beforePipeline:Compose Test")
+        HooksTracker2.events should contain("beforePipeline:Compose Test")
+      }
+
+      it("should report correct componentsRun in success result") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Count Test"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "One"
+                instance-config { component-id = "one" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Two"
+                instance-config { component-id = "two" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Three"
+                instance-config { component-id = "three" }
+              }
+            ]
+          }
+        """)
+
+        SimplePipelineRunner.run(config, HooksTracker)
+
+        HooksTracker.lastResult shouldBe a[PipelineResult.Success]
+        HooksTracker.lastResult.asInstanceOf[PipelineResult.Success].componentsRun shouldBe 3
+      }
+
+      it("should report componentsCompleted in failure result") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Partial Failure"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "SuccessOne"
+                instance-config { component-id = "success-one" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailOnRunComponent"
+                instance-name = "Failure"
+                instance-config { fail-message = "fail after one" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "NeverRun"
+                instance-config { component-id = "never-run" }
+              }
+            ]
+          }
+        """)
+
+        intercept[RuntimeException] {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        HooksTracker.lastResult shouldBe a[PipelineResult.Failure]
+        val failure: PipelineResult.Failure = HooksTracker.lastResult.asInstanceOf[PipelineResult.Failure]
+        failure.componentsCompleted shouldBe 1
+        failure.failedComponent.map(_.instanceName) shouldBe Some("Failure")
+      }
+
+      it("should invoke hooks for empty pipeline") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Empty Pipeline"
+            pipeline-components = []
+          }
+        """)
+
+        SimplePipelineRunner.run(config, HooksTracker)
+
+        HooksTracker.events should contain("beforePipeline:Empty Pipeline")
+        HooksTracker.events.last should startWith("afterPipeline:Empty Pipeline:Success")
+        HooksTracker.lastResult shouldBe a[PipelineResult.Success]
+        HooksTracker.lastResult.asInstanceOf[PipelineResult.Success].componentsRun shouldBe 0
+      }
+
+      it("should use PipelineHooks.NoOp by default") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "NoOp Test"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "NoOpTracker"
+                instance-config { component-id = "noop-test" }
+              }
+            ]
+          }
+        """)
+
+        // Should not throw - uses NoOp hooks by default
+        noException should be thrownBy {
+          SimplePipelineRunner.run(config)
+        }
+
+        ExecutionTracker.executedComponents should contain("noop-test")
+      }
+    }
   }
+}
+
+// =============================================================================
+// HOOKS TRACKER - Tracks hook invocations for testing
+// =============================================================================
+
+object HooksTracker extends PipelineHooks {
+  val events: mutable.ListBuffer[String] = mutable.ListBuffer.empty
+  var lastResult: PipelineResult         = _
+
+  def reset(): Unit = {
+    events.clear()
+    lastResult = null
+  }
+
+  override def beforePipeline(config: PipelineConfig): Unit =
+    events += s"beforePipeline:${config.pipelineName}"
+
+  override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit = {
+    val resultType: String = result match {
+      case _: PipelineResult.Success => "Success"
+      case _: PipelineResult.Failure => "Failure"
+    }
+    events += s"afterPipeline:${config.pipelineName}:$resultType"
+    lastResult = result
+  }
+
+  override def beforeComponent(config: ComponentConfig, index: Int, total: Int): Unit =
+    events += s"beforeComponent:${config.instanceName}:$index:$total"
+
+  override def afterComponent(
+    config: ComponentConfig,
+    index: Int,
+    total: Int,
+    durationMs: Long
+  ): Unit = {
+    val _ = durationMs // suppress unused warning
+    events += s"afterComponent:${config.instanceName}:$index:$total"
+  }
+
+  override def onComponentFailure(config: ComponentConfig, index: Int, error: Throwable): Unit = {
+    val _ = error // suppress unused warning
+    events += s"onComponentFailure:${config.instanceName}:$index"
+  }
+}
+
+object HooksTracker2 extends PipelineHooks {
+  val events: mutable.ListBuffer[String] = mutable.ListBuffer.empty
+
+  def reset(): Unit = events.clear()
+
+  override def beforePipeline(config: PipelineConfig): Unit =
+    events += s"beforePipeline:${config.pipelineName}"
+
+  override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit =
+    events += s"afterPipeline:${config.pipelineName}"
 }
 
 // =============================================================================
