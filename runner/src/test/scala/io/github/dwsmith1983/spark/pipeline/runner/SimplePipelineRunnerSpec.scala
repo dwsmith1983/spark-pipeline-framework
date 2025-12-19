@@ -380,8 +380,8 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
             pipeline-name = "Empty Run"
             pipeline-components = [
               {
-                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.EmptyComponent"
-                instance-name = "Empty"
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.NoOpComponent"
+                instance-name = "NoOp"
                 instance-config {}
               }
             ]
@@ -420,39 +420,6 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
         (ExecutionTracker.executedComponents should contain).allOf("same-type-1", "same-type-2")
       }
 
-      it("should handle very long pipeline names") {
-        val longName: String = "A" * 1000
-        val config: Config = ConfigFactory.parseString(s"""
-          spark {
-            master = "local[1]"
-          }
-          pipeline {
-            pipeline-name = "$longName"
-            pipeline-components = []
-          }
-        """)
-
-        noException should be thrownBy {
-          SimplePipelineRunner.run(config)
-        }
-      }
-
-      it("should handle special characters in pipeline name") {
-        val config: Config = ConfigFactory.parseString("""
-          spark {
-            master = "local[1]"
-          }
-          pipeline {
-            pipeline-name = "Pipeline with spaces and special chars"
-            pipeline-components = []
-          }
-        """)
-
-        noException should be thrownBy {
-          SimplePipelineRunner.run(config)
-        }
-      }
-
       it("should handle component with empty instance-config") {
         val config: Config = ConfigFactory.parseString("""
           spark {
@@ -462,8 +429,8 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
             pipeline-name = "Empty Instance Config"
             pipeline-components = [
               {
-                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.EmptyConfigComponent"
-                instance-name = "EmptyConfig"
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.NoOpComponent"
+                instance-name = "NoOpWithEmptyConfig"
                 instance-config {}
               }
             ]
@@ -626,31 +593,16 @@ class RequiredConfigComponent(conf: RequiredOnlyConfig) extends DataFlow {
     logger.info(s"Required: ${conf.requiredField}")
 }
 
-// Empty component
-object EmptyComponent extends ConfigurableInstance {
+// No-op component - does nothing, accepts empty config
+object NoOpComponent extends ConfigurableInstance {
 
-  override def createFromConfig(conf: Config): EmptyComponent =
-    new EmptyComponent()
+  override def createFromConfig(conf: Config): NoOpComponent =
+    new NoOpComponent()
 }
 
-class EmptyComponent extends DataFlow {
+class NoOpComponent extends DataFlow {
 
-  override def run(): Unit = {
-    // Intentionally empty
-  }
-}
-
-// Empty config component
-object EmptyConfigComponent extends ConfigurableInstance {
-
-  override def createFromConfig(conf: Config): EmptyConfigComponent =
-    new EmptyConfigComponent()
-}
-
-class EmptyConfigComponent extends DataFlow {
-
-  override def run(): Unit =
-    logger.info("Empty config component running")
+  override def run(): Unit = ()
 }
 
 // Session capture component

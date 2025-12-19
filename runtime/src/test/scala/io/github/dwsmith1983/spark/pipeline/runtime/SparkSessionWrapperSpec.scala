@@ -234,7 +234,7 @@ class SparkSessionWrapperSpec extends AnyFunSpec with Matchers with BeforeAndAft
           master = Some("local[1]"),
           appName = Some("First")
         )
-        SparkSessionWrapper.configure(config1)
+        val session1: SparkSession = SparkSessionWrapper.configure(config1)
 
         val config2: SparkConfig = SparkConfig(
           master = Some("local[2]"),
@@ -242,10 +242,11 @@ class SparkSessionWrapperSpec extends AnyFunSpec with Matchers with BeforeAndAft
         )
         val session2: SparkSession = SparkSessionWrapper.configure(config2)
 
-        // Spark's getOrCreate will return existing session, but our wrapper
-        // updates its reference. The actual Spark behavior depends on whether
-        // there's an active session.
-        session2 should not be null
+        // Spark's getOrCreate returns existing active session - it cannot be
+        // reconfigured without stopping first. Both references point to same session.
+        session1 shouldBe theSameInstanceAs(session2)
+        // Original config values are retained (not overwritten)
+        session2.sparkContext.appName shouldBe "First"
       }
     }
   }
