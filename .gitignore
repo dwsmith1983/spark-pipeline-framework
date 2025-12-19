@@ -41,3 +41,4 @@ spark-warehouse/
 
 # Test output
 test-output/
+*\ [0-9]/

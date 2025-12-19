@@ -175,24 +175,11 @@ class WordCountSpec extends AnyFunSpec with Matchers with BeforeAndAfterAll with
           component.run()
         }
 
-        exception should not be null
-      }
-
-      it("should fail when output path is not writable") {
-        val inputPath = tempDir.resolve("input")
-        Files.createDirectory(inputPath)
-        Files.writeString(inputPath.resolve("file.txt"), "test")
-
-        // Use an invalid path
-        val config = WordCount.WordCountConfig(
-          inputPath = inputPath.toString,
-          outputPath = "/root/cannot/write/here" // Assuming no root access
+        // Spark throws AnalysisException for missing paths
+        exception.getClass.getSimpleName should (
+          equal("AnalysisException").or(equal("PathNotFoundException"))
         )
-
-        val component = new WordCount(config)
-
-        // This might or might not throw depending on permissions
-        // The key is it handles the error
+        exception.getMessage should include("/non/existent/path")
       }
     }
 
