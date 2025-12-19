@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.4...v0.1.5) (2025-12-19)
+
+
+### Bug Fixes
+
+* use sonatypeCentralUpload for Central Portal publishing ([#18](https://github.com/dwsmith1983/spark-pipeline-framework/issues/18)) ([49a9171](https://github.com/dwsmith1983/spark-pipeline-framework/commit/49a917118e7b88c93bae327b93df3acaa6b7a1bf))
+
 ## [0.1.4](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.3...v0.1.4) (2025-12-19)
 
 
