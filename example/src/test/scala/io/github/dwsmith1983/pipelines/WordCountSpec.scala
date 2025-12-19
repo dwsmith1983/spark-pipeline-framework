@@ -177,7 +177,7 @@ class WordCountSpec extends AnyFunSpec with Matchers with BeforeAndAfterAll with
 
         // Spark throws AnalysisException for missing paths
         exception.getClass.getSimpleName should (
-          equal("AnalysisException") or equal("PathNotFoundException")
+          equal("AnalysisException").or(equal("PathNotFoundException"))
         )
         exception.getMessage should include("/non/existent/path")
       }
