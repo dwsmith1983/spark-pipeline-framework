@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.5...v0.1.6) (2025-12-19)
+
+
+### Bug Fixes
+
+* upgrade sbt-sonatype to 3.12.2 for Central Portal support ([#20](https://github.com/dwsmith1983/spark-pipeline-framework/issues/20)) ([d57e5be](https://github.com/dwsmith1983/spark-pipeline-framework/commit/d57e5be9dccf52928b54d81e3f258b96ebea3d74))
+
 ## [0.1.5](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.4...v0.1.5) (2025-12-19)
 
 
