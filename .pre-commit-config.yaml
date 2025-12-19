@@ -1,0 +1,27 @@
+# Pre-commit configuration for spark-pipeline-framework
+#
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Manual run:
+#   pre-commit run --all-files
+#
+repos:
+  - repo: local
+    hooks:
+      - id: scalafmt
+        name: scalafmt
+        entry: sbt --error scalafmtCheckAll
+        language: system
+        pass_filenames: false
+        types: [scala]
+        stages: [pre-commit]
+
+      - id: scalastyle
+        name: scalastyle
+        entry: sbt --error scalastyle
+        language: system
+        pass_filenames: false
+        types: [scala]
+        stages: [pre-commit]

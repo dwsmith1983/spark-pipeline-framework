@@ -5,7 +5,24 @@ package io.github.dwsmith1983.spark.pipeline
  *
  * This package provides the entry point for executing pipelines:
  *
- * - [[runner.SimplePipelineRunner]] - Main class for spark-submit
+ * - [[runner.PipelineRunner]] - Trait defining the pipeline execution interface
+ * - [[runner.SimplePipelineRunner]] - Main class for spark-submit (sequential execution)
+ *
+ * == Lifecycle Hooks ==
+ *
+ * Use `PipelineHooks` from the config package to monitor
+ * or customize pipeline execution:
+ *
+ * {{{
+ * import io.github.dwsmith1983.spark.pipeline.config._
+ *
+ * val hooks = new PipelineHooks {
+ *   override def afterComponent(config: ComponentConfig, index: Int, total: Int, durationMs: Long): Unit =
+ *     println(s"Component $${config.instanceName} completed in $${durationMs}ms")
+ * }
+ *
+ * SimplePipelineRunner.run(config, hooks)
+ * }}}
  *
  * == Deployment ==
  *

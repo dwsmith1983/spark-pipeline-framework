@@ -12,6 +12,8 @@ package io.github.dwsmith1983.spark.pipeline
  * - [[config.ComponentConfig]] - Configuration model for individual components
  * - [[config.SparkConfig]] - Configuration model for Spark session settings
  * - [[config.ComponentInstantiator]] - Utility for reflection-based component instantiation
+ * - [[config.PipelineHooks]] - Lifecycle hooks for pipeline execution monitoring
+ * - [[config.PipelineResult]] - Result type for pipeline execution (Success/Failure)
  *
  * Example usage in user code:
  * {{{

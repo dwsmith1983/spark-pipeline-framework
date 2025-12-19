@@ -13,6 +13,7 @@ A configuration-driven framework for building Spark pipelines with HOCON config 
 - **Type-safe configuration** via PureConfig with automatic case class binding
 - **SparkSession management** from config files
 - **Dynamic component instantiation** via reflection (no compile-time coupling)
+- **Lifecycle hooks** for monitoring, metrics, and custom error handling
 - **Cross-compilation** support for Spark 3.x (Scala 2.12, 2.13) and Spark 4.x (Scala 2.13)
 - **Clean separation** between framework and user code
 
@@ -97,6 +98,108 @@ spark-submit \
   -Dconfig.file=/path/to/pipeline.conf
 ```
 
+## Lifecycle Hooks
+
+Use `PipelineHooks` to monitor execution or add custom behavior:
+
+```scala
+import io.github.dwsmith1983.spark.pipeline.config._
+import io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner
+
+val hooks = new PipelineHooks {
+  override def beforePipeline(config: PipelineConfig): Unit =
+    println(s"Starting: ${config.pipelineName}")
+
+  override def afterComponent(config: ComponentConfig, index: Int, total: Int, durationMs: Long): Unit =
+    println(s"[${index + 1}/$total] ${config.instanceName} completed in ${durationMs}ms")
+
+  override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit =
+    result match {
+      case PipelineResult.Success(duration, count) =>
+        println(s"Pipeline completed: $count components in ${duration}ms")
+      case PipelineResult.Failure(error, _, _) =>
+        println(s"Pipeline failed: ${error.getMessage}")
+    }
+}
+
+SimplePipelineRunner.run(config, hooks)
+```
+
+You can also compose multiple hooks:
+
+```scala
+val composed = PipelineHooks.compose(loggingHooks, metricsHooks, alertingHooks)
+SimplePipelineRunner.run(config, composed)
+```
+
+## Running the Demo
+
+The example module includes a complete end-to-end demo showing hooks, metrics, and multi-component pipelines:
+
+```bash
+# Build the example JAR
+sbt examplespark3/package
+
+# Run with spark-submit
+spark-submit \
+  --class io.github.dwsmith1983.pipelines.DemoPipeline \
+  --master "local[*]" \
+  example/target/spark3-jvm-2.13/spark-pipeline-example-spark3_2.13-0.1.2.jar
+```
+
+The demo will:
+1. Create sample text data
+2. Run a multi-component word analysis pipeline
+3. Display real-time progress via logging hooks
+4. Generate a metrics report showing component timings
+
+### Sample Output
+
+```
+======================================================================
+  SPARK PIPELINE FRAMEWORK - END-TO-END DEMO
+======================================================================
+
+[SETUP] Creating sample input data...
+[SETUP] Input file: /tmp/pipeline-demo/sample-text.txt
+
+[RUNNING] Executing pipeline with composed hooks...
+
+[PIPELINE START] Word Analysis Pipeline (2 components)
+  [1/2] Starting: WordCount(all words)
+  [1/2] Completed: WordCount(all words) (1842ms)
+  [2/2] Starting: WordCount(frequent words only)
+  [2/2] Completed: WordCount(frequent words only) (211ms)
+
+[PIPELINE COMPLETE] 2 components executed in 2395ms
+
+======================================================================
+  METRICS REPORT
+======================================================================
+Pipeline: Word Analysis Pipeline
+Status: SUCCESS
+Total Duration: 2395ms
+Components: 2/2 completed
+
+Component Timings:
+  WordCount(all words): 1842ms (76.9%)
+  WordCount(frequent words only): 211ms (8.8%)
+
+======================================================================
+  OUTPUT LOCATIONS
+======================================================================
+  All words:      /tmp/pipeline-demo/wordcount-output
+  Frequent words: /tmp/pipeline-demo/filtered-output
+
+[CLEANUP] Removing temporary files...
+[DONE]
+```
+
+See `example/src/main/scala/io/github/dwsmith1983/pipelines/` for:
+- `WordCount.scala` - Example component
+- `MetricsHooks.scala` - Metrics collection hooks
+- `DemoPipeline.scala` - End-to-end runnable demo
+
 ## Cross-Compilation Matrix
 
 | Artifact | Spark | Scala | Java |
@@ -119,6 +222,39 @@ sbt package
 
 # Build runner assembly (optional, for fat JAR)
 sbt runner/assembly
+```
+
+## Development Setup
+
+### Pre-commit Hooks
+
+Set up pre-commit hooks to catch formatting and style issues before pushing:
+
+**Option 1: Using pre-commit framework (recommended)**
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+**Option 2: Manual git hook**
+```bash
+cp scripts/pre-commit.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+The hooks will automatically run `scalafmtCheckAll` and `scalastyle` before each commit.
+
+### Manual Linting
+
+```bash
+# Check formatting
+sbt scalafmtCheckAll
+
+# Auto-fix formatting
+sbt scalafmtAll
+
+# Check style
+sbt scalastyle
 ```
 
 ## License

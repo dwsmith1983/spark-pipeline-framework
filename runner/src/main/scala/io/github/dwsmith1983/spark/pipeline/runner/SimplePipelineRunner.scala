@@ -52,8 +52,21 @@ import pureconfig.generic.auto._
  *   ]
  * }
  * }}}
+ *
+ * == Lifecycle Hooks ==
+ *
+ * You can provide custom `PipelineHooks` to monitor or customize execution:
+ *
+ * {{{
+ * val hooks = new PipelineHooks {
+ *   override def afterComponent(config: ComponentConfig, index: Int, total: Int, durationMs: Long): Unit =
+ *     metrics.recordDuration(config.instanceName, durationMs)
+ * }
+ *
+ * SimplePipelineRunner.run(config, hooks)
+ * }}}
  */
-object SimplePipelineRunner {
+object SimplePipelineRunner extends PipelineRunner {
 
   private val logger: Logger = LogManager.getLogger(getClass)
 
@@ -68,11 +81,17 @@ object SimplePipelineRunner {
   }
 
   /**
-   * Runs the pipeline defined in the given configuration.
+   * Runs the pipeline defined in the given configuration with lifecycle hooks.
    *
    * @param config The loaded HOCON configuration
+   * @param hooks Lifecycle hooks to invoke during execution
    */
-  def run(config: Config): Unit =
+  override def run(config: Config, hooks: PipelineHooks): Unit = {
+    val pipelineStartTime: Long                         = System.currentTimeMillis()
+    var componentsCompleted: Int                        = 0
+    var pipelineConfig: PipelineConfig                  = null
+    var currentComponentConfig: Option[ComponentConfig] = None
+
     try {
       // Configure SparkSession if spark block is present
       if (config.hasPath("spark")) {
@@ -82,17 +101,24 @@ object SimplePipelineRunner {
       }
 
       // Load pipeline configuration
-      val pipelineConfig: PipelineConfig =
-        ConfigSource.fromConfig(config.getConfig("pipeline")).loadOrThrow[PipelineConfig]
+      pipelineConfig = ConfigSource.fromConfig(config.getConfig("pipeline")).loadOrThrow[PipelineConfig]
 
       logger.info(s"Starting pipeline: ${pipelineConfig.pipelineName}")
       logger.info(s"Components to run: ${pipelineConfig.pipelineComponents.size}")
 
+      // Invoke beforePipeline hook
+      hooks.beforePipeline(pipelineConfig)
+
+      val totalComponents: Int = pipelineConfig.pipelineComponents.size
+
       // Execute each component in sequence
       pipelineConfig.pipelineComponents.zipWithIndex.foreach {
         case (componentConfig: ComponentConfig, index: Int) =>
+          currentComponentConfig = Some(componentConfig)
           val componentNumber: Int = index + 1
-          val totalComponents: Int = pipelineConfig.pipelineComponents.size
+
+          // Invoke beforeComponent hook
+          hooks.beforeComponent(componentConfig, index, totalComponents)
 
           logger.info(s"[$componentNumber/$totalComponents] Instantiating: ${componentConfig.instanceName}")
           logger.debug(s"Instance type: ${componentConfig.instanceType}")
@@ -106,24 +132,45 @@ object SimplePipelineRunner {
 
           val duration: Long = System.currentTimeMillis() - startTime
           logger.info(s"[$componentNumber/$totalComponents] Completed: ${componentConfig.instanceName} (${duration}ms)")
+
+          // Invoke afterComponent hook
+          hooks.afterComponent(componentConfig, index, totalComponents, duration)
+
+          componentsCompleted += 1
+          currentComponentConfig = None
       }
 
       logger.info(s"Pipeline completed successfully: ${pipelineConfig.pipelineName}")
 
+      // Invoke afterPipeline hook with success result
+      val totalDuration: Long = System.currentTimeMillis() - pipelineStartTime
+      hooks.afterPipeline(pipelineConfig, PipelineResult.Success(totalDuration, componentsCompleted))
+
     } catch {
       case e: ComponentInstantiationException =>
         logger.error(s"Failed to instantiate component: ${e.getMessage}", e)
+        currentComponentConfig.foreach(cc => hooks.onComponentFailure(cc, componentsCompleted, e))
+        if (pipelineConfig != null) {
+          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsCompleted))
+        }
         throw e
       case e: pureconfig.error.ConfigReaderException[_] =>
         logger.error(s"Configuration error: ${e.getMessage}", e)
+        if (pipelineConfig != null) {
+          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsCompleted))
+        }
         throw e
       case e: Exception =>
         logger.error(s"Pipeline failed: ${e.getMessage}", e)
+        currentComponentConfig.foreach(cc => hooks.onComponentFailure(cc, componentsCompleted, e))
+        if (pipelineConfig != null) {
+          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsCompleted))
+        }
         throw e
-    } finally {
-      // Note: We don't stop SparkSession here as it may be managed externally
-      // or reused. The session will be stopped when the JVM exits.
     }
+    // Note: We don't stop SparkSession here as it may be managed externally
+    // or reused. The session will be stopped when the JVM exits.
+  }
 
   /**
    * Runs the pipeline from a config file path.
@@ -133,5 +180,16 @@ object SimplePipelineRunner {
   def runFromFile(configPath: String): Unit = {
     val config: Config = ConfigFactory.parseFile(new java.io.File(configPath)).resolve()
     run(config)
+  }
+
+  /**
+   * Runs the pipeline from a config file path with lifecycle hooks.
+   *
+   * @param configPath Path to the HOCON configuration file
+   * @param hooks Lifecycle hooks to invoke during execution
+   */
+  def runFromFile(configPath: String, hooks: PipelineHooks): Unit = {
+    val config: Config = ConfigFactory.parseFile(new java.io.File(configPath)).resolve()
+    run(config, hooks)
   }
 }
