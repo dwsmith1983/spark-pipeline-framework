@@ -54,6 +54,38 @@ ThisBuild / coverageMinimumStmtTotal := 75
 ThisBuild / coverageFailOnMinimum := true
 ThisBuild / coverageHighlighting := true
 
+// =============================================================================
+// Helper functions for Spark module settings
+// =============================================================================
+
+/**
+ * Creates common settings for Spark-dependent modules.
+ * @param modulePrefix Base module name (e.g., "spark-pipeline-runtime")
+ * @param sparkAxis The Spark version axis (Spark3 or Spark4)
+ * @return Settings sequence with moduleName and spark-sql dependency
+ */
+def sparkModuleSettings(modulePrefix: String, sparkAxis: SparkAxis): Seq[Setting[_]] = Seq(
+  moduleName := s"$modulePrefix-${sparkAxis.idSuffix}",
+  libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkAxis.sparkVersion % Provided
+)
+
+/**
+ * Creates assembly settings for executable Spark modules.
+ * @param modulePrefix Base module name (e.g., "spark-pipeline-runner")
+ * @param sparkAxis The Spark version axis (Spark3 or Spark4)
+ * @param mainClassName Fully qualified main class name
+ * @return Settings sequence with assembly configuration
+ */
+def assemblySettings(modulePrefix: String, sparkAxis: SparkAxis, mainClassName: String): Seq[Setting[_]] = Seq(
+  assembly / mainClass := Some(mainClassName),
+  assembly / assemblyJarName := s"$modulePrefix-${sparkAxis.idSuffix}_${scalaBinaryVersion.value}-${version.value}.jar",
+  assembly / assemblyMergeStrategy := {
+    case PathList("META-INF", _*) => MergeStrategy.discard
+    case "reference.conf"         => MergeStrategy.concat
+    case _                        => MergeStrategy.first
+  }
+)
+
 // Scala compiler options - common to all versions
 lazy val commonScalacOptions = Seq(
   "-deprecation",                      // Emit warning for usages of deprecated APIs
@@ -155,97 +187,66 @@ lazy val core = (projectMatrix in file("core"))
 // ============================================================================
 // Runtime Module - Spark-dependent, provides SparkSessionWrapper and DataFlow
 // ============================================================================
+lazy val runtimeModulePrefix = "spark-pipeline-runtime"
+
 lazy val runtime = (projectMatrix in file("runtime"))
   .dependsOn(core)
   .settings(
     name := "spark-pipeline-runtime",
     commonSettings
-    // Logging provided by Spark's internal Logging trait (Log4j2-based)
   )
   .customRow(
     scalaVersions = Seq(scala212),
     axisValues = Seq(Spark3, VirtualAxis.jvm),
-    settings = Seq(
-      moduleName := "spark-pipeline-runtime-spark3",
-      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark35 % Provided
-    )
+    settings = sparkModuleSettings(runtimeModulePrefix, Spark3)
   )
   .customRow(
     scalaVersions = Seq(scala213),
     axisValues = Seq(Spark3, VirtualAxis.jvm),
-    settings = Seq(
-      moduleName := "spark-pipeline-runtime-spark3",
-      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark35 % Provided
-    )
+    settings = sparkModuleSettings(runtimeModulePrefix, Spark3)
   )
   .customRow(
     scalaVersions = Seq(scala213),
     axisValues = Seq(Spark4, VirtualAxis.jvm),
-    settings = Seq(
-      moduleName := "spark-pipeline-runtime-spark4",
-      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark40 % Provided
-    )
+    settings = sparkModuleSettings(runtimeModulePrefix, Spark4)
   )
 
 // ============================================================================
 // Runner Module - Entry point with SimplePipelineRunner
 // ============================================================================
+lazy val runnerModulePrefix = "spark-pipeline-runner"
+lazy val runnerMainClass    = "io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner"
+
 lazy val runner = (projectMatrix in file("runner"))
   .dependsOn(runtime)
   .settings(
     name := "spark-pipeline-runner",
     commonSettings
-    // Logging provided by Spark's internal Logging trait (Log4j2-based)
   )
   .customRow(
     scalaVersions = Seq(scala212),
     axisValues = Seq(Spark3, VirtualAxis.jvm),
-    settings = Seq(
-      moduleName := "spark-pipeline-runner-spark3",
-      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark35 % Provided,
-      assembly / mainClass := Some("io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner"),
-      assembly / assemblyJarName := s"spark-pipeline-runner-spark3_${scalaBinaryVersion.value}-${version.value}.jar",
-      assembly / assemblyMergeStrategy := {
-        case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-        case "reference.conf" => MergeStrategy.concat
-        case _ => MergeStrategy.first
-      }
-    )
+    settings = sparkModuleSettings(runnerModulePrefix, Spark3) ++
+      assemblySettings(runnerModulePrefix, Spark3, runnerMainClass)
   )
   .customRow(
     scalaVersions = Seq(scala213),
     axisValues = Seq(Spark3, VirtualAxis.jvm),
-    settings = Seq(
-      moduleName := "spark-pipeline-runner-spark3",
-      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark35 % Provided,
-      assembly / mainClass := Some("io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner"),
-      assembly / assemblyJarName := s"spark-pipeline-runner-spark3_${scalaBinaryVersion.value}-${version.value}.jar",
-      assembly / assemblyMergeStrategy := {
-        case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-        case "reference.conf" => MergeStrategy.concat
-        case _ => MergeStrategy.first
-      }
-    )
+    settings = sparkModuleSettings(runnerModulePrefix, Spark3) ++
+      assemblySettings(runnerModulePrefix, Spark3, runnerMainClass)
   )
   .customRow(
     scalaVersions = Seq(scala213),
     axisValues = Seq(Spark4, VirtualAxis.jvm),
-    settings = Seq(
-      moduleName := "spark-pipeline-runner-spark4",
-      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark40 % Provided,
-      assembly / mainClass := Some("io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner"),
-      assembly / assemblyJarName := s"spark-pipeline-runner-spark4_${scalaBinaryVersion.value}-${version.value}.jar",
-      assembly / assemblyMergeStrategy := {
-        case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-        case "reference.conf" => MergeStrategy.concat
-        case _ => MergeStrategy.first
-      }
-    )
+    settings = sparkModuleSettings(runnerModulePrefix, Spark4) ++
+      assemblySettings(runnerModulePrefix, Spark4, runnerMainClass)
   )
 
 // ============================================================================
 // Example Module - Shows how to use the framework (depends on runtime only)
 // ============================================================================
+lazy val exampleModulePrefix = "spark-pipeline-example"
+
 lazy val example = (projectMatrix in file("example"))
   .dependsOn(runtime)
   .settings(
@@ -256,26 +257,17 @@ lazy val example = (projectMatrix in file("example"))
   .customRow(
     scalaVersions = Seq(scala212),
     axisValues = Seq(Spark3, VirtualAxis.jvm),
-    settings = Seq(
-      moduleName := "spark-pipeline-example-spark3",
-      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark35 % Provided
-    )
+    settings = sparkModuleSettings(exampleModulePrefix, Spark3)
   )
   .customRow(
     scalaVersions = Seq(scala213),
     axisValues = Seq(Spark3, VirtualAxis.jvm),
-    settings = Seq(
-      moduleName := "spark-pipeline-example-spark3",
-      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark35 % Provided
-    )
+    settings = sparkModuleSettings(exampleModulePrefix, Spark3)
   )
   .customRow(
     scalaVersions = Seq(scala213),
     axisValues = Seq(Spark4, VirtualAxis.jvm),
-    settings = Seq(
-      moduleName := "spark-pipeline-example-spark4",
-      libraryDependencies += "org.apache.spark" %% "spark-sql" % spark40 % Provided
-    )
+    settings = sparkModuleSettings(exampleModulePrefix, Spark4)
   )
 
 // Root project
