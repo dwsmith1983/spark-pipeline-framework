@@ -29,9 +29,11 @@ A configuration-driven framework for building Spark pipelines with HOCON config 
 
 ### 1. Add dependency to your project
 
+Available on [Maven Central](https://central.sonatype.com/namespace/io.github.dwsmith1983):
+
 ```scala
-// build.sbt
-libraryDependencies += "io.github.dwsmith1983" %% "spark-pipeline-runtime-spark3" % "0.1.0"
+// build.sbt - no resolver needed, Maven Central is the default
+libraryDependencies += "io.github.dwsmith1983" %% "spark-pipeline-runtime-spark3" % "<version>"
 ```
 
 ### 2. Create a pipeline component

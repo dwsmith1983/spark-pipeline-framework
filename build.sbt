@@ -35,8 +35,8 @@ ThisBuild / developers := List(
 )
 
 // Maven Central (Sonatype) publishing via Central Portal
-ThisBuild / sonatypeCredentialHost := "central.sonatype.com"
-ThisBuild / sonatypeRepository := "https://central.sonatype.com/api/v1/publisher"
+import xerial.sbt.Sonatype.sonatypeCentralHost
+ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 ThisBuild / publishTo := sonatypePublishToBundle.value
 
 // Resolve dependency conflicts
