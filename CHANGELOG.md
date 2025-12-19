@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.2...v0.1.3) (2025-12-19)
+
+
+### Features
+
+* add PipelineRunner trait with lifecycle hooks ([#13](https://github.com/dwsmith1983/spark-pipeline-framework/issues/13)) ([5968468](https://github.com/dwsmith1983/spark-pipeline-framework/commit/59684682f2f88da98d3a861d1c5ac06637f6fcac))
+
 ## [0.1.2](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.1...v0.1.2) (2025-12-15)
 
 
