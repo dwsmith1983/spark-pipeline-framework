@@ -20,17 +20,8 @@ ThisBuild / organization := "io.github.dwsmith1983"
 ThisBuild / version := "0.1.3" // x-release-please-version
 ThisBuild / javacOptions ++= Seq("-source", "17", "-target", "17")
 
-// GitHub Packages publishing
-ThisBuild / publishTo := Some(
-  "GitHub Packages" at "https://maven.pkg.github.com/dwsmith1983/spark-pipeline-framework"
-)
+// Publishing configuration
 ThisBuild / publishMavenStyle := true
-ThisBuild / credentials += Credentials(
-  "GitHub Package Registry",
-  "maven.pkg.github.com",
-  "dwsmith1983",
-  sys.env.getOrElse("GITHUB_TOKEN", "")
-)
 ThisBuild / licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
 ThisBuild / homepage := Some(url("https://github.com/dwsmith1983/spark-pipeline-framework"))
 ThisBuild / scmInfo := Some(
@@ -42,6 +33,11 @@ ThisBuild / scmInfo := Some(
 ThisBuild / developers := List(
   Developer("dwsmith1983", "Dustin Smith", "Dustin.William.Smith@gmail.com", url("https://github.com/dwsmith1983"))
 )
+
+// Maven Central (Sonatype) publishing via Central Portal
+ThisBuild / sonatypeCredentialHost := "central.sonatype.com"
+ThisBuild / sonatypeRepository := "https://central.sonatype.com/api/v1/publisher"
+ThisBuild / publishTo := sonatypePublishToBundle.value
 
 // Resolve dependency conflicts
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
