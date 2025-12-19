@@ -210,6 +210,28 @@ class SparkSessionWrapperSpec extends AnyFunSpec with Matchers with BeforeAndAft
         sessions.distinct should have size 1
       }
 
+      it("should handle concurrent access to configure") {
+        import scala.concurrent.{Future, Await}
+        import scala.concurrent.duration._
+        import scala.concurrent.ExecutionContext.Implicits.global
+
+        // Multiple threads calling configure with different configs
+        val futures: Seq[Future[SparkSession]] = (1 to 10).map { i: Int =>
+          Future {
+            val config: SparkConfig = SparkConfig(
+              master = Some("local[1]"),
+              appName = Some(s"ConcurrentConfig$i")
+            )
+            SparkSessionWrapper.configure(config)
+          }
+        }
+
+        val sessions: Seq[SparkSession] = Await.result(Future.sequence(futures), 30.seconds)
+
+        // All should return the same session instance (Spark reuses active session)
+        sessions.distinct should have size 1
+      }
+
       it("should handle config with many Spark properties") {
         val config: SparkConfig = SparkConfig(
           master = Some("local[1]"),

@@ -12,6 +12,7 @@ import pureconfig._
 import pureconfig.generic.auto._
 
 import scala.collection.mutable
+import java.nio.file.{Files, Path}
 
 /**
  * Integration tests for SimplePipelineRunner.
@@ -185,6 +186,42 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
         }
 
         ExecutionTracker.executedComponents should contain("no-spark")
+      }
+
+      it("should run pipeline via main method with config file") {
+        val tempFile: Path        = Files.createTempFile("pipeline-test", ".conf")
+        val configContent: String = """
+          spark {
+            master = "local[1]"
+            app-name = "MainMethodTest"
+          }
+          pipeline {
+            pipeline-name = "Main Method Test"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "MainTracker"
+                instance-config { component-id = "main-test" }
+              }
+            ]
+          }
+        """
+        Files.writeString(tempFile, configContent)
+
+        val originalValue: String = System.getProperty("config.file")
+        try {
+          System.setProperty("config.file", tempFile.toString)
+          ConfigFactory.invalidateCaches()
+
+          SimplePipelineRunner.main(Array.empty)
+
+          ExecutionTracker.executedComponents should contain("main-test")
+        } finally {
+          if (originalValue != null) System.setProperty("config.file", originalValue)
+          else System.clearProperty("config.file")
+          ConfigFactory.invalidateCaches()
+          Files.deleteIfExists(tempFile)
+        }
       }
     }
 
