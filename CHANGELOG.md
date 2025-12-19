@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.3...v0.1.4) (2025-12-19)
+
+
+### Features
+
+* add Maven Central publishing support ([#16](https://github.com/dwsmith1983/spark-pipeline-framework/issues/16)) ([f9b7898](https://github.com/dwsmith1983/spark-pipeline-framework/commit/f9b78986494a004950d9b999d7bf2838fed75126))
+
 ## [0.1.3](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.2...v0.1.3) (2025-12-19)
 
 
