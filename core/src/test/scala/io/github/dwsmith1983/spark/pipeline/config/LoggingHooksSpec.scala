@@ -47,7 +47,7 @@ class LoggingHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach 
 
     val ctx: LoggerContext =
       org.apache.logging.log4j.LogManager.getContext(false).asInstanceOf[LoggerContext]
-    val config = ctx.getConfiguration
+    val config       = ctx.getConfiguration
     val loggerConfig = config.getLoggerConfig(classOf[LoggingHooks].getName)
     originalLevel = loggerConfig.getLevel
     loggerConfig.setLevel(Level.DEBUG)
@@ -257,7 +257,7 @@ class LoggingHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach 
 
         hooks1.runId should not be empty
         hooks2.runId should not be empty
-        hooks1.runId should not equal hooks2.runId
+        (hooks1.runId should not).equal(hooks2.runId)
       }
 
       it("should use provided runId") {

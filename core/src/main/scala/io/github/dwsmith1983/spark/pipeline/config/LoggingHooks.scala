@@ -56,12 +56,11 @@ import scala.collection.mutable
  */
 class LoggingHooks(
   val runId: String = java.util.UUID.randomUUID().toString.take(8),
-  val useStructuredFormat: Boolean = true
-) extends PipelineHooks {
+  val useStructuredFormat: Boolean = true) extends PipelineHooks {
 
   private val logger: Logger = LogManager.getLogger(classOf[LoggingHooks])
 
-  @volatile private var pipelineStartTime: Long = 0L
+  @volatile private var pipelineStartTime: Long           = 0L
   private val componentStartTimes: mutable.Map[Int, Long] = mutable.Map()
 
   private def timestamp: String = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
@@ -80,8 +79,8 @@ class LoggingHooks(
     if (useStructuredFormat) {
       logger.info(
         s"""{"event":"pipeline_start","run_id":"$runId","pipeline_name":"${escapeJson(
-          config.pipelineName
-        )}","component_count":$componentCount,"timestamp":"$timestamp"}"""
+            config.pipelineName
+          )}","component_count":$componentCount,"timestamp":"$timestamp"}"""
       )
     } else {
       logger.info(
@@ -101,8 +100,8 @@ class LoggingHooks(
     if (useStructuredFormat) {
       logger.info(
         s"""{"event":"pipeline_end","run_id":"$runId","pipeline_name":"${escapeJson(
-          config.pipelineName
-        )}","duration_ms":$durationMs,"status":"$status","components_completed":$componentsCompleted,"timestamp":"$timestamp"}"""
+            config.pipelineName
+          )}","duration_ms":$durationMs,"status":"$status","components_completed":$componentsCompleted,"timestamp":"$timestamp"}"""
       )
     } else {
       val statusText = if (status == "success") "completed" else "failed"
@@ -119,10 +118,10 @@ class LoggingHooks(
     if (useStructuredFormat) {
       logger.info(
         s"""{"event":"component_start","run_id":"$runId","component_name":"${escapeJson(
-          config.instanceName
-        )}","component_type":"${escapeJson(
-          config.instanceType
-        )}","component_index":$componentNumber,"total_components":$total,"timestamp":"$timestamp"}"""
+            config.instanceName
+          )}","component_type":"${escapeJson(
+            config.instanceType
+          )}","component_index":$componentNumber,"total_components":$total,"timestamp":"$timestamp"}"""
       )
     } else {
       logger.info(s"[$componentNumber/$total] Starting '${config.instanceName}'")
@@ -141,8 +140,8 @@ class LoggingHooks(
     if (useStructuredFormat) {
       logger.info(
         s"""{"event":"component_end","run_id":"$runId","component_name":"${escapeJson(
-          config.instanceName
-        )}","component_index":$componentNumber,"total_components":$total,"duration_ms":$durationMs,"status":"success","timestamp":"$timestamp"}"""
+            config.instanceName
+          )}","component_index":$componentNumber,"total_components":$total,"duration_ms":$durationMs,"status":"success","timestamp":"$timestamp"}"""
       )
     } else {
       logger.info(s"[$componentNumber/$total] Completed '${config.instanceName}' in ${durationMs}ms")
@@ -151,8 +150,8 @@ class LoggingHooks(
 
   override def onComponentFailure(config: ComponentConfig, index: Int, error: Throwable): Unit = {
     val componentNumber = index + 1
-    val errorType = error.getClass.getSimpleName
-    val errorMessage = Option(error.getMessage).getOrElse("No message")
+    val errorType       = error.getClass.getSimpleName
+    val errorMessage    = Option(error.getMessage).getOrElse("No message")
     val durationMs = componentStartTimes.get(index) match {
       case Some(startTime) => System.currentTimeMillis() - startTime
       case None            => 0L
@@ -162,10 +161,10 @@ class LoggingHooks(
     if (useStructuredFormat) {
       logger.error(
         s"""{"event":"component_error","run_id":"$runId","component_name":"${escapeJson(
-          config.instanceName
-        )}","component_index":$componentNumber,"duration_ms":$durationMs,"error_type":"$errorType","error_message":"${escapeJson(
-          errorMessage
-        )}","timestamp":"$timestamp"}"""
+            config.instanceName
+          )}","component_index":$componentNumber,"duration_ms":$durationMs,"error_type":"$errorType","error_message":"${escapeJson(
+            errorMessage
+          )}","timestamp":"$timestamp"}"""
       )
     } else {
       logger.error(
