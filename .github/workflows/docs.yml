@@ -38,17 +38,36 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Generate Scaladoc
-        run: sbt doc
+        run: |
+          # Generate docs for Scala 2.13 / Spark 3 variants
+          sbt "core/doc" "runtimespark3/doc" "runnerspark3/doc"
 
       - name: Copy Scaladoc to website
         run: |
           mkdir -p website/static/api
-          # Copy core module docs
-          cp -r core/target/jvm-2.13/api/* website/static/api/ 2>/dev/null || true
-          # Copy runtime module docs (spark3 as default)
-          cp -r runtime/target/spark3-jvm-2.13/api/* website/static/api/ 2>/dev/null || true
-          # Copy runner module docs
-          cp -r runner/target/spark3-jvm-2.13/api/* website/static/api/ 2>/dev/null || true
+
+          # Find and list available API directories for debugging
+          echo "Available API directories:"
+          find . -type d -name "api" -path "*/target/*" | head -20
+
+          # Copy from available locations (try multiple path patterns)
+          for module in core runtime runner; do
+            for path in "$module/target/jvm-2.13/api" "$module/target/spark3-jvm-2.13/api" "$module/target/scala-2.13/api"; do
+              if [ -d "$path" ] && [ -f "$path/index.html" ]; then
+                echo "Copying from $path"
+                cp -r "$path"/* website/static/api/
+              fi
+            done
+          done
+
+          # Verify API files were copied
+          echo "Files in website/static/api:"
+          ls -la website/static/api/ || echo "WARNING: No files in static/api"
+
+          if [ ! -f "website/static/api/index.html" ]; then
+            echo "ERROR: API index.html not found - Scaladoc copy failed"
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
