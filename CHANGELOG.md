@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.7...v0.1.8) (2025-12-20)
+
+
+### Features
+
+* add built-in LoggingHooks with structured JSON logging ([#25](https://github.com/dwsmith1983/spark-pipeline-framework/issues/25)) ([4717930](https://github.com/dwsmith1983/spark-pipeline-framework/commit/471793019e591c29370bfce4474a18070a3b2934))
+
 ## [0.1.7](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.6...v0.1.7) (2025-12-20)
 
 
