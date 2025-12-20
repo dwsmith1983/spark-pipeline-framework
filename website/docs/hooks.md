@@ -2,9 +2,57 @@
 
 Lifecycle hooks allow you to monitor pipeline execution, collect metrics, handle errors, and integrate with external systems without modifying your components.
 
+## Built-in LoggingHooks
+
+The framework includes a production-ready `LoggingHooks` implementation with SRE best practices:
+
+```scala
+import io.github.dwsmith1983.spark.pipeline.config.LoggingHooks
+
+// Structured JSON logging (recommended for production)
+val hooks = new LoggingHooks()
+SimplePipelineRunner.run(config, hooks)
+
+// Human-readable logging (for development)
+val devHooks = LoggingHooks.humanReadable()
+
+// With external correlation ID for distributed tracing
+val tracedHooks = new LoggingHooks(runId = "trace-abc-123")
+```
+
+### Structured Log Output
+
+When using structured format (default), logs are emitted as JSON for easy parsing by log aggregators (Splunk, ELK, Datadog):
+
+```json
+{"event":"pipeline_start","run_id":"abc-123","pipeline_name":"WordCount","component_count":3,"timestamp":"..."}
+{"event":"component_start","run_id":"abc-123","component_name":"ReadInput","component_index":1,"total_components":3}
+{"event":"component_end","run_id":"abc-123","component_name":"ReadInput","duration_ms":1523,"status":"success"}
+{"event":"pipeline_end","run_id":"abc-123","duration_ms":5000,"status":"success","components_completed":3}
+```
+
+### Human-Readable Output
+
+For development, use `LoggingHooks.humanReadable()`:
+
+```
+[INFO] Pipeline 'WordCount' starting (run_id=abc-123, components=3)
+[INFO] [1/3] Starting 'ReadInput'
+[INFO] [1/3] Completed 'ReadInput' in 1523ms
+[INFO] Pipeline 'WordCount' completed in 5000ms (run_id=abc-123)
+```
+
+### Features
+
+- **Correlation ID**: Every log includes `run_id` for filtering a single execution
+- **Standardized Events**: `pipeline_start`, `component_end`, `component_error`, etc.
+- **Duration Tracking**: `duration_ms` for performance analysis (p50, p95, p99)
+- **Progress Context**: `component_index` and `total_components`
+- **Error Classification**: `error_type` and `error_message` fields
+
 ## PipelineHooks Trait
 
-The `PipelineHooks` trait provides callbacks for key pipeline events:
+For custom hooks, implement the `PipelineHooks` trait:
 
 ```scala
 import io.github.dwsmith1983.spark.pipeline.config._
@@ -14,7 +62,7 @@ trait PipelineHooks {
   def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit = {}
   def beforeComponent(config: ComponentConfig, index: Int, total: Int): Unit = {}
   def afterComponent(config: ComponentConfig, index: Int, total: Int, durationMs: Long): Unit = {}
-  def onComponentFailure(config: ComponentConfig, index: Int, total: Int, error: Throwable): Unit = {}
+  def onComponentFailure(config: ComponentConfig, index: Int, error: Throwable): Unit = {}
 }
 ```
 
@@ -140,7 +188,6 @@ class AlertingHooks(slackWebhook: String) extends PipelineHooks {
   override def onComponentFailure(
     config: ComponentConfig,
     index: Int,
-    total: Int,
     error: Throwable
   ): Unit = {
     sendSlackMessage(
@@ -249,7 +296,6 @@ class SafeAlertingHooks extends PipelineHooks {
   override def onComponentFailure(
     config: ComponentConfig,
     index: Int,
-    total: Int,
     error: Throwable
   ): Unit = {
     try {

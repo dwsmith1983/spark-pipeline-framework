@@ -10,6 +10,7 @@ lazy val spark40 = "4.0.1"
 lazy val typesafeConfigVersion = "1.4.3"
 lazy val pureConfigVersion = "0.17.4"
 lazy val scalatestVersion = "3.2.17"
+lazy val log4jVersion = "2.23.1"
 
 // Spark version axes (SparkAxis defined in project/SparkAxis.scala)
 lazy val Spark3 = SparkAxis(spark35, "spark3")
@@ -175,7 +176,9 @@ lazy val core = (projectMatrix in file("core"))
     commonSettings,
     libraryDependencies ++= Seq(
       "com.typesafe" % "config" % typesafeConfigVersion,
-      "com.github.pureconfig" %% "pureconfig" % pureConfigVersion
+      "com.github.pureconfig" %% "pureconfig" % pureConfigVersion,
+      "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
+      "org.apache.logging.log4j" % "log4j-core" % log4jVersion % Test
     )
   )
   .jvmPlatform(scalaVersions = Seq(scala212, scala213))
