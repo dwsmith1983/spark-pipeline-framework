@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.6...v0.1.7) (2025-12-20)
+
+
+### Bug Fixes
+
+* improve Scaladoc copy and update homepage URL ([#23](https://github.com/dwsmith1983/spark-pipeline-framework/issues/23)) ([67d4787](https://github.com/dwsmith1983/spark-pipeline-framework/commit/67d4787f1124a5b9c2774d1e6a6d9e22732222ea))
+
 ## [0.1.6](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.5...v0.1.6) (2025-12-19)
 
 
