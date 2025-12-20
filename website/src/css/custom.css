@@ -1,0 +1,38 @@
+/**
+ * Spark Pipeline Framework - Custom Styles
+ * Using Apache Spark-inspired color palette
+ */
+
+:root {
+  /* Spark orange-inspired palette */
+  --ifm-color-primary: #e25a1c;
+  --ifm-color-primary-dark: #cb5119;
+  --ifm-color-primary-darker: #c04c18;
+  --ifm-color-primary-darkest: #9e3f14;
+  --ifm-color-primary-light: #e56b32;
+  --ifm-color-primary-lighter: #e87540;
+  --ifm-color-primary-lightest: #ed9269;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #ff7744;
+  --ifm-color-primary-dark: #ff6129;
+  --ifm-color-primary-darker: #ff561c;
+  --ifm-color-primary-darkest: #e83d00;
+  --ifm-color-primary-light: #ff8d5f;
+  --ifm-color-primary-lighter: #ff986c;
+  --ifm-color-primary-lightest: #ffb99a;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Code blocks */
+.prism-code {
+  font-size: 14px;
+}
+
+/* Hero section adjustments */
+.hero--primary {
+  background: linear-gradient(135deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-darkest) 100%);
+}

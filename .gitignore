@@ -42,3 +42,10 @@ spark-warehouse/
 # Test output
 test-output/
 *\ [0-9]/
+
+# Docusaurus / Website
+website/node_modules/
+website/build/
+website/.docusaurus/
+website/.cache-loader/
+website/static/api/
