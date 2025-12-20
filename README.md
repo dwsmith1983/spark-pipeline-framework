@@ -14,6 +14,7 @@ A configuration-driven framework for building Spark pipelines with HOCON config 
 - **SparkSession management** from config files
 - **Dynamic component instantiation** via reflection (no compile-time coupling)
 - **Lifecycle hooks** for monitoring, metrics, and custom error handling
+- **Built-in structured logging** with `LoggingHooks` (JSON format)
 - **Cross-compilation** support for Spark 3.x (Scala 2.12, 2.13) and Spark 4.x (Scala 2.13)
 - **Clean separation** between framework and user code
 
@@ -102,35 +103,55 @@ spark-submit \
 
 ## Lifecycle Hooks
 
-Use `PipelineHooks` to monitor execution or add custom behavior:
+### Built-in LoggingHooks
+
+Use the built-in `LoggingHooks` for structured logging:
+
+```scala
+import io.github.dwsmith1983.spark.pipeline.config.LoggingHooks
+import io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner
+
+// Structured JSON logging (recommended for production)
+val hooks = new LoggingHooks()
+SimplePipelineRunner.run(config, hooks)
+
+// Human-readable logging for development
+val devHooks = LoggingHooks.humanReadable()
+SimplePipelineRunner.run(config, devHooks)
+```
+
+Output (JSON format):
+```json
+{"event":"pipeline_start","run_id":"abc-123","pipeline_name":"MyPipeline","component_count":3}
+{"event":"component_end","run_id":"abc-123","component_name":"Transform","duration_ms":1523,"status":"success"}
+{"event":"pipeline_end","run_id":"abc-123","duration_ms":5000,"status":"success","components_completed":3}
+```
+
+### Custom Hooks
+
+For custom behavior, implement the `PipelineHooks` trait:
 
 ```scala
 import io.github.dwsmith1983.spark.pipeline.config._
-import io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner
 
-val hooks = new PipelineHooks {
-  override def beforePipeline(config: PipelineConfig): Unit =
-    println(s"Starting: ${config.pipelineName}")
-
+val metricsHooks = new PipelineHooks {
   override def afterComponent(config: ComponentConfig, index: Int, total: Int, durationMs: Long): Unit =
-    println(s"[${index + 1}/$total] ${config.instanceName} completed in ${durationMs}ms")
+    metrics.recordDuration(config.instanceName, durationMs)
 
   override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit =
     result match {
       case PipelineResult.Success(duration, count) =>
-        println(s"Pipeline completed: $count components in ${duration}ms")
+        metrics.recordSuccess(config.pipelineName, duration)
       case PipelineResult.Failure(error, _, _) =>
-        println(s"Pipeline failed: ${error.getMessage}")
+        alerting.sendAlert(s"Pipeline failed: ${error.getMessage}")
     }
 }
-
-SimplePipelineRunner.run(config, hooks)
 ```
 
-You can also compose multiple hooks:
+Compose multiple hooks:
 
 ```scala
-val composed = PipelineHooks.compose(loggingHooks, metricsHooks, alertingHooks)
+val composed = PipelineHooks.compose(new LoggingHooks(), metricsHooks, alertingHooks)
 SimplePipelineRunner.run(config, composed)
 ```
 
