@@ -23,7 +23,7 @@ ThisBuild / javacOptions ++= Seq("-source", "17", "-target", "17")
 // Publishing configuration
 ThisBuild / publishMavenStyle := true
 ThisBuild / licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
-ThisBuild / homepage := Some(url("https://github.com/dwsmith1983/spark-pipeline-framework"))
+ThisBuild / homepage := Some(url("https://dwsmith1983.github.io/spark-pipeline-framework/"))
 ThisBuild / scmInfo := Some(
   ScmInfo(
     url("https://github.com/dwsmith1983/spark-pipeline-framework"),
