@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.9...v0.1.10) (2025-12-21)
+
+
+### Features
+
+* add dry-run validation and continue-on-error mode ([#30](https://github.com/dwsmith1983/spark-pipeline-framework/issues/30)) ([5308ca5](https://github.com/dwsmith1983/spark-pipeline-framework/commit/5308ca502c0d97a787ff417231f8c3e3f845cd5a))
+
 ## [0.1.9](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.8...v0.1.9) (2025-12-21)
 
 
