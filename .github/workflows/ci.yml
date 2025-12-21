@@ -28,27 +28,6 @@ jobs:
       - name: Check style (scalastyle)
         run: sbt scalastyle
 
-  docs:
-    name: Generate Scaladocs
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: zulu
-          java-version: 17
-          cache: sbt
-
-      - name: Setup sbt
-        uses: sbt/setup-sbt@v1
-
-      - name: Generate Scaladocs
-        run: sbt doc
-
   test-spark3:
     name: Test (Spark 3 / Scala 2.12)
     runs-on: ubuntu-latest

@@ -60,7 +60,7 @@ object MyComponent extends ConfigurableInstance {
 
 class MyComponent(conf: MyComponent.Config) extends DataFlow {
   override def run(): Unit = {
-    logInfo(s"Processing ${conf.inputTable}")
+    logger.info(s"Processing ${conf.inputTable}")
     spark.table(conf.inputTable).write.parquet(conf.outputPath)
   }
 }
