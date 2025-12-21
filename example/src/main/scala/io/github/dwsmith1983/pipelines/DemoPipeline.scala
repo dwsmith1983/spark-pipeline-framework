@@ -124,6 +124,9 @@ object DemoPipeline {
               println(s"\n[PIPELINE FAILED] After $completed components")
               failed.foreach(c => println(s"  Failed component: ${c.instanceName}"))
               println(s"  Error: ${error.getMessage}")
+            case PipelineResult.PartialSuccess(duration, succeeded, failed, failures) =>
+              println(s"\n[PIPELINE PARTIAL] $succeeded succeeded, $failed failed in ${duration}ms")
+              failures.foreach { case (c, e) => println(s"  Failed: ${c.instanceName} - ${e.getMessage}") }
           }
         }
 

@@ -95,6 +95,8 @@ class LoggingHooks(
         ("success", duration, completed)
       case PipelineResult.Failure(_, _, completed) =>
         ("failure", System.currentTimeMillis() - pipelineStartTime, completed)
+      case PipelineResult.PartialSuccess(duration, succeeded, failed, _) =>
+        ("partial_success", duration, succeeded + failed)
     }
 
     if (useStructuredFormat) {

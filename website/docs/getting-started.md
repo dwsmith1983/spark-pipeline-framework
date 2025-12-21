@@ -8,6 +8,8 @@ Spark Pipeline Framework is a configuration-driven framework for building Apache
 - **SparkSession management** from config files
 - **Dynamic component instantiation** via reflection (no compile-time coupling)
 - **Lifecycle hooks** for monitoring, metrics, and custom error handling
+- **Dry-run validation** to verify configs without executing pipelines
+- **Flexible error handling** with fail-fast or continue-on-error modes
 - **Cross-compilation** support for Spark 3.x and 4.x
 
 ## Installation

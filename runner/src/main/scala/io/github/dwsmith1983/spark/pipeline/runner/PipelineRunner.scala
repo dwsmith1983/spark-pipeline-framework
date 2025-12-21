@@ -1,7 +1,7 @@
 package io.github.dwsmith1983.spark.pipeline.runner
 
 import com.typesafe.config.Config
-import io.github.dwsmith1983.spark.pipeline.config.PipelineHooks
+import io.github.dwsmith1983.spark.pipeline.config.{DryRunResult, PipelineHooks}
 
 /**
  * Trait defining the interface for pipeline execution.
@@ -60,4 +60,31 @@ trait PipelineRunner {
    * @param hooks Lifecycle hooks to invoke during execution
    */
   def run(config: Config, hooks: PipelineHooks): Unit
+
+  /**
+   * Validates the pipeline configuration without executing components.
+   *
+   * This method parses the configuration and instantiates all components
+   * to verify they can be created, but does not call their `run()` methods.
+   * Useful for CI/CD pipelines to validate configurations before deployment.
+   *
+   * This is a convenience method that uses `PipelineHooks.NoOp`.
+   *
+   * @param config The loaded HOCON configuration containing `pipeline` and optionally `spark` blocks
+   * @return Validation result indicating success or listing errors
+   */
+  def dryRun(config: Config): DryRunResult = dryRun(config, PipelineHooks.NoOp)
+
+  /**
+   * Validates the pipeline configuration without executing components.
+   *
+   * This method parses the configuration and instantiates all components
+   * to verify they can be created, but does not call their `run()` methods.
+   * Lifecycle hooks are invoked for `beforePipeline` and `afterPipeline` only.
+   *
+   * @param config The loaded HOCON configuration containing `pipeline` and optionally `spark` blocks
+   * @param hooks Lifecycle hooks to invoke (only beforePipeline/afterPipeline are called)
+   * @return Validation result indicating success or listing errors
+   */
+  def dryRun(config: Config, hooks: PipelineHooks): DryRunResult
 }

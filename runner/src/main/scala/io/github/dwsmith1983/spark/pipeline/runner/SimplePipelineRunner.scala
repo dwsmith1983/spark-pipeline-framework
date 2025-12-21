@@ -88,9 +88,11 @@ object SimplePipelineRunner extends PipelineRunner {
    */
   override def run(config: Config, hooks: PipelineHooks): Unit = {
     val pipelineStartTime: Long                         = System.currentTimeMillis()
-    var componentsCompleted: Int                        = 0
+    var componentsSucceeded: Int                        = 0
     var pipelineConfig: PipelineConfig                  = null
     var currentComponentConfig: Option[ComponentConfig] = None
+    val failures: scala.collection.mutable.ListBuffer[(ComponentConfig, Throwable)] =
+      scala.collection.mutable.ListBuffer.empty
 
     try {
       // Configure SparkSession if spark block is present
@@ -105,6 +107,9 @@ object SimplePipelineRunner extends PipelineRunner {
 
       logger.info(s"Starting pipeline: ${pipelineConfig.pipelineName}")
       logger.info(s"Components to run: ${pipelineConfig.pipelineComponents.size}")
+      if (!pipelineConfig.failFast) {
+        logger.info("Running in continue-on-error mode (failFast=false)")
+      }
 
       // Invoke beforePipeline hook
       hooks.beforePipeline(pipelineConfig)
@@ -117,54 +122,75 @@ object SimplePipelineRunner extends PipelineRunner {
           currentComponentConfig = Some(componentConfig)
           val componentNumber: Int = index + 1
 
-          // Invoke beforeComponent hook
-          hooks.beforeComponent(componentConfig, index, totalComponents)
+          try {
+            // Invoke beforeComponent hook
+            hooks.beforeComponent(componentConfig, index, totalComponents)
 
-          logger.info(s"[$componentNumber/$totalComponents] Instantiating: ${componentConfig.instanceName}")
-          logger.debug(s"Instance type: ${componentConfig.instanceType}")
+            logger.info(s"[$componentNumber/$totalComponents] Instantiating: ${componentConfig.instanceName}")
+            logger.debug(s"Instance type: ${componentConfig.instanceType}")
 
-          val component: PipelineComponent = ComponentInstantiator.instantiate[PipelineComponent](componentConfig)
+            val component: PipelineComponent = ComponentInstantiator.instantiate[PipelineComponent](componentConfig)
 
-          logger.info(s"[$componentNumber/$totalComponents] Running: ${componentConfig.instanceName}")
-          val startTime: Long = System.currentTimeMillis()
+            logger.info(s"[$componentNumber/$totalComponents] Running: ${componentConfig.instanceName}")
+            val startTime: Long = System.currentTimeMillis()
 
-          component.run()
+            component.run()
 
-          val duration: Long = System.currentTimeMillis() - startTime
-          logger.info(s"[$componentNumber/$totalComponents] Completed: ${componentConfig.instanceName} (${duration}ms)")
+            val duration: Long = System.currentTimeMillis() - startTime
+            logger.info(s"[$componentNumber/$totalComponents] Completed: ${componentConfig.instanceName} (${duration}ms)")
 
-          // Invoke afterComponent hook
-          hooks.afterComponent(componentConfig, index, totalComponents, duration)
+            // Invoke afterComponent hook
+            hooks.afterComponent(componentConfig, index, totalComponents, duration)
 
-          componentsCompleted += 1
+            componentsSucceeded += 1
+          } catch {
+            case e: Exception if !pipelineConfig.failFast =>
+              // Continue on error mode: record failure and continue
+              logger.error(
+                s"[$componentNumber/$totalComponents] Failed: ${componentConfig.instanceName} - ${e.getMessage}",
+                e
+              )
+              hooks.onComponentFailure(componentConfig, index, e)
+              failures += ((componentConfig, e))
+          }
           currentComponentConfig = None
       }
 
-      logger.info(s"Pipeline completed successfully: ${pipelineConfig.pipelineName}")
-
-      // Invoke afterPipeline hook with success result
       val totalDuration: Long = System.currentTimeMillis() - pipelineStartTime
-      hooks.afterPipeline(pipelineConfig, PipelineResult.Success(totalDuration, componentsCompleted))
+
+      if (failures.isEmpty) {
+        logger.info(s"Pipeline completed successfully: ${pipelineConfig.pipelineName}")
+        hooks.afterPipeline(pipelineConfig, PipelineResult.Success(totalDuration, componentsSucceeded))
+      } else {
+        logger.warn(s"Pipeline completed with ${failures.size} failure(s): ${pipelineConfig.pipelineName}")
+        val result: PipelineResult = PipelineResult.PartialSuccess(
+          totalDuration,
+          componentsSucceeded,
+          failures.size,
+          failures.toList
+        )
+        hooks.afterPipeline(pipelineConfig, result)
+      }
 
     } catch {
       case e: ComponentInstantiationException =>
         logger.error(s"Failed to instantiate component: ${e.getMessage}", e)
-        currentComponentConfig.foreach(cc => hooks.onComponentFailure(cc, componentsCompleted, e))
+        currentComponentConfig.foreach(cc => hooks.onComponentFailure(cc, componentsSucceeded, e))
         if (pipelineConfig != null) {
-          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsCompleted))
+          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsSucceeded))
         }
         throw e
       case e: pureconfig.error.ConfigReaderException[_] =>
         logger.error(s"Configuration error: ${e.getMessage}", e)
         if (pipelineConfig != null) {
-          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsCompleted))
+          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsSucceeded))
         }
         throw e
       case e: Exception =>
         logger.error(s"Pipeline failed: ${e.getMessage}", e)
-        currentComponentConfig.foreach(cc => hooks.onComponentFailure(cc, componentsCompleted, e))
+        currentComponentConfig.foreach(cc => hooks.onComponentFailure(cc, componentsSucceeded, e))
         if (pipelineConfig != null) {
-          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsCompleted))
+          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsSucceeded))
         }
         throw e
     }
@@ -191,5 +217,114 @@ object SimplePipelineRunner extends PipelineRunner {
   def runFromFile(configPath: String, hooks: PipelineHooks): Unit = {
     val config: Config = ConfigFactory.parseFile(new java.io.File(configPath)).resolve()
     run(config, hooks)
+  }
+
+  /**
+   * Validates the pipeline configuration without executing components.
+   *
+   * This method parses the configuration and instantiates all components
+   * to verify they can be created, but does not call their `run()` methods.
+   *
+   * @param config The loaded HOCON configuration
+   * @param hooks Lifecycle hooks to invoke (only beforePipeline/afterPipeline are called)
+   * @return Validation result indicating success or listing errors
+   */
+  override def dryRun(config: Config, hooks: PipelineHooks): DryRunResult = {
+    val errors: scala.collection.mutable.ListBuffer[DryRunError] =
+      scala.collection.mutable.ListBuffer.empty
+
+    try {
+      // Configure SparkSession if spark block is present
+      if (config.hasPath("spark")) {
+        val sparkConfig: SparkConfig = ConfigSource.fromConfig(config.getConfig("spark")).loadOrThrow[SparkConfig]
+        logger.info("[dry-run] Configuring SparkSession from config")
+        SparkSessionWrapper.configure(sparkConfig)
+      }
+
+      // Load pipeline configuration
+      val pipelineConfig: PipelineConfig =
+        ConfigSource.fromConfig(config.getConfig("pipeline")).loadOrThrow[PipelineConfig]
+
+      logger.info(s"[dry-run] Validating pipeline: ${pipelineConfig.pipelineName}")
+      logger.info(s"[dry-run] Components to validate: ${pipelineConfig.pipelineComponents.size}")
+
+      // Invoke beforePipeline hook
+      hooks.beforePipeline(pipelineConfig)
+
+      val totalComponents: Int = pipelineConfig.pipelineComponents.size
+
+      // Validate each component by instantiating it (but not running)
+      pipelineConfig.pipelineComponents.zipWithIndex.foreach {
+        case (componentConfig: ComponentConfig, index: Int) =>
+          val componentNumber: Int = index + 1
+          try {
+            logger.info(s"[dry-run] [$componentNumber/$totalComponents] Validating: ${componentConfig.instanceName}")
+            logger.debug(s"[dry-run] Instance type: ${componentConfig.instanceType}")
+
+            // Instantiate to validate - this checks class exists, has companion, config is valid
+            ComponentInstantiator.instantiate[PipelineComponent](componentConfig)
+
+            logger.info(s"[dry-run] [$componentNumber/$totalComponents] Valid: ${componentConfig.instanceName}")
+          } catch {
+            case e: Exception =>
+              logger.error(s"[dry-run] [$componentNumber/$totalComponents] Invalid: ${componentConfig.instanceName} - ${e.getMessage}")
+              errors += DryRunError.ComponentInstantiationError(componentConfig, e)
+          }
+      }
+
+      if (errors.isEmpty) {
+        logger.info(s"[dry-run] Pipeline validation successful: ${pipelineConfig.pipelineName}")
+        val result: DryRunResult = DryRunResult.Valid(
+          pipelineConfig.pipelineName,
+          pipelineConfig.pipelineComponents.size,
+          pipelineConfig.pipelineComponents
+        )
+        hooks.afterPipeline(pipelineConfig, PipelineResult.Success(0L, 0))
+        result
+      } else {
+        logger.error(s"[dry-run] Pipeline validation failed with ${errors.size} error(s)")
+        val result: DryRunResult = DryRunResult.Invalid(errors.toList)
+        hooks.afterPipeline(
+          pipelineConfig,
+          PipelineResult.Failure(
+            new RuntimeException(s"Dry-run validation failed with ${errors.size} error(s)"),
+            None,
+            0
+          )
+        )
+        result
+      }
+
+    } catch {
+      case e: pureconfig.error.ConfigReaderException[_] =>
+        logger.error(s"[dry-run] Configuration error: ${e.getMessage}", e)
+        DryRunResult.Invalid(List(DryRunError.ConfigParseError(e.getMessage, e)))
+      case e: com.typesafe.config.ConfigException =>
+        logger.error(s"[dry-run] Configuration error: ${e.getMessage}", e)
+        DryRunResult.Invalid(List(DryRunError.ConfigParseError(e.getMessage, e)))
+    }
+  }
+
+  /**
+   * Validates the pipeline from a config file path.
+   *
+   * @param configPath Path to the HOCON configuration file
+   * @return Validation result indicating success or listing errors
+   */
+  def dryRunFromFile(configPath: String): DryRunResult = {
+    val config: Config = ConfigFactory.parseFile(new java.io.File(configPath)).resolve()
+    dryRun(config)
+  }
+
+  /**
+   * Validates the pipeline from a config file path with lifecycle hooks.
+   *
+   * @param configPath Path to the HOCON configuration file
+   * @param hooks Lifecycle hooks to invoke
+   * @return Validation result indicating success or listing errors
+   */
+  def dryRunFromFile(configPath: String, hooks: PipelineHooks): DryRunResult = {
+    val config: Config = ConfigFactory.parseFile(new java.io.File(configPath)).resolve()
+    dryRun(config, hooks)
   }
 }

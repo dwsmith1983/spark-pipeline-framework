@@ -85,8 +85,9 @@ class MetricsHooks extends PipelineHooks {
   override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit = {
     val _ = config // suppress unused warning
     _totalDurationMs = result match {
-      case PipelineResult.Success(duration, _) => duration
-      case PipelineResult.Failure(_, _, _)     => System.currentTimeMillis() - _pipelineStartTime
+      case PipelineResult.Success(duration, _)              => duration
+      case PipelineResult.Failure(_, _, _)                  => System.currentTimeMillis() - _pipelineStartTime
+      case PipelineResult.PartialSuccess(duration, _, _, _) => duration
     }
   }
 
