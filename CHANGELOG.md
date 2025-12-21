@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.8...v0.1.9) (2025-12-21)
+
+
+### Bug Fixes
+
+* **docs:** resolve API page navigation issues and align logging docs ([#27](https://github.com/dwsmith1983/spark-pipeline-framework/issues/27)) ([edbc27e](https://github.com/dwsmith1983/spark-pipeline-framework/commit/edbc27e0f3b69d10feffcfa96214ca7e2e92db7c))
+
 ## [0.1.8](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.7...v0.1.8) (2025-12-20)
 
 
