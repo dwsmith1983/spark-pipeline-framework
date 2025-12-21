@@ -79,6 +79,28 @@ pipeline {
 |-------|------|----------|-------------|
 | `pipeline-name` | String | Yes | Human-readable pipeline name |
 | `pipeline-components` | List | Yes | Ordered list of components to execute |
+| `fail-fast` | Boolean | No | If `true` (default), stop on first component failure. If `false`, continue executing remaining components and report all failures. |
+
+### Error Handling Modes
+
+By default, the pipeline stops immediately when a component fails (`fail-fast = true`). You can change this behavior to continue execution despite failures:
+
+```json
+pipeline {
+  pipeline-name = "Resilient Pipeline"
+  fail-fast = false  // Continue after component failures
+
+  pipeline-components = [
+    // Components will all be attempted even if some fail
+  ]
+}
+```
+
+When `fail-fast = false`:
+- All components are attempted regardless of earlier failures
+- `onComponentFailure` hook is called for each failed component
+- Pipeline returns `PartialSuccess` result with details of all failures
+- Useful for batch processing where some failures are acceptable
 
 ### ComponentConfig Fields
 

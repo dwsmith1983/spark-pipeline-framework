@@ -14,16 +14,20 @@ import com.typesafe.config.Config
  * {{{
  * pipeline {
  *   pipeline-name = "My Data Pipeline"
+ *   fail-fast = true  # Optional, defaults to true
  *   pipeline-components = [...]
  * }
  * }}}
  *
  * @param pipelineName Human-readable name for the pipeline
  * @param pipelineComponents List of components to execute in order
+ * @param failFast If true (default), stop on first component failure.
+ *                 If false, continue executing remaining components and report all failures.
  */
 case class PipelineConfig(
   pipelineName: String,
-  pipelineComponents: List[ComponentConfig])
+  pipelineComponents: List[ComponentConfig],
+  failFast: Boolean = true)
 
 /**
  * Configuration for a single pipeline component.

@@ -40,4 +40,24 @@ object PipelineResult {
     extends PipelineResult {
     override def isSuccess: Boolean = false
   }
+
+  /**
+   * Indicates partial pipeline completion when `failFast = false`.
+   *
+   * Some components succeeded while others failed. The pipeline continued
+   * execution after failures instead of stopping at the first error.
+   *
+   * @param durationMs Total pipeline execution time in milliseconds
+   * @param componentsSucceeded Number of components that completed successfully
+   * @param componentsFailed Number of components that failed
+   * @param failures List of failed components with their errors
+   */
+  final case class PartialSuccess(
+    durationMs: Long,
+    componentsSucceeded: Int,
+    componentsFailed: Int,
+    failures: List[(ComponentConfig, Throwable)])
+    extends PipelineResult {
+    override def isSuccess: Boolean = false
+  }
 }

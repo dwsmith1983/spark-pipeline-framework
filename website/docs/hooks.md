@@ -71,21 +71,33 @@ trait PipelineHooks {
 The `PipelineResult` sealed trait represents pipeline completion status:
 
 ```scala
-sealed trait PipelineResult
+sealed trait PipelineResult {
+  def isSuccess: Boolean
+  def isFailure: Boolean = !isSuccess
+}
 
 object PipelineResult {
   case class Success(
-    totalDurationMs: Long,
-    componentCount: Int
+    durationMs: Long,
+    componentsRun: Int
   ) extends PipelineResult
 
   case class Failure(
     error: Throwable,
-    failedComponentIndex: Int,
-    failedComponentName: String
+    failedComponent: Option[ComponentConfig],
+    componentsCompleted: Int
   ) extends PipelineResult
+
+  case class PartialSuccess(
+    durationMs: Long,
+    componentsSucceeded: Int,
+    componentsFailed: Int,
+    failures: List[(ComponentConfig, Throwable)]
+  ) extends PipelineResult  // isSuccess = false
 }
 ```
+
+`PartialSuccess` is returned when `fail-fast = false` and some components fail. It contains details of all failures while allowing you to see which components succeeded.
 
 ## Basic Example
 
@@ -306,6 +318,72 @@ class SafeAlertingHooks extends PipelineHooks {
         // Log but don't rethrow - hooks shouldn't fail the pipeline
         System.err.println(s"Alert hook failed: ${e.getMessage}")
     }
+  }
+}
+```
+
+## Dry-Run Mode
+
+Validate pipeline configuration without executing components using `dryRun()`:
+
+```scala
+import io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner
+import io.github.dwsmith1983.spark.pipeline.config.{DryRunResult, DryRunError}
+
+val result = SimplePipelineRunner.dryRun(config)
+
+result match {
+  case DryRunResult.Valid(pipelineName, componentCount, components) =>
+    println(s"Pipeline '$pipelineName' is valid with $componentCount components")
+
+  case DryRunResult.Invalid(errors) =>
+    errors.foreach {
+      case DryRunError.ConfigParseError(msg, _) =>
+        println(s"Config error: $msg")
+      case DryRunError.ComponentInstantiationError(comp, cause) =>
+        println(s"Component '${comp.instanceName}' failed: ${cause.getMessage}")
+    }
+    sys.exit(1)
+}
+```
+
+### What Dry-Run Validates
+
+- Configuration parsing (HOCON syntax, required fields)
+- Component class existence and accessibility
+- Companion object `createFromConfig` method presence
+- Component-specific configuration validity
+
+### What Dry-Run Does NOT Do
+
+- Does not call `component.run()`
+- Does not read/write data
+- Does not require actual Spark cluster resources
+
+### CI/CD Integration
+
+Use dry-run to validate configuration changes before deployment:
+
+```bash
+# In your CI pipeline
+sbt "runMain com.example.ValidatePipeline /path/to/config.conf"
+```
+
+```scala
+object ValidatePipeline {
+  def main(args: Array[String]): Unit = {
+    val configPath = args(0)
+    val result = SimplePipelineRunner.dryRunFromFile(configPath)
+
+    if (result.isInvalid) {
+      System.err.println("Pipeline validation failed!")
+      result.asInstanceOf[DryRunResult.Invalid].errors.foreach { e =>
+        System.err.println(s"  - ${e.message}")
+      }
+      sys.exit(1)
+    }
+
+    println("Pipeline configuration is valid")
   }
 }
 ```

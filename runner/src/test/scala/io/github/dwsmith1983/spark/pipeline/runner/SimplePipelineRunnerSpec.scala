@@ -744,6 +744,248 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
         ExecutionTracker.executedComponents should contain("noop-test")
       }
     }
+
+    // =========================================================================
+    // DRY-RUN MODE TESTS
+    // =========================================================================
+
+    describe("dry-run mode") {
+
+      it("should validate config and instantiate components without running them") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "DryRun Valid"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Tracker"
+                instance-config { component-id = "dry-run-test" }
+              }
+            ]
+          }
+        """)
+
+        val result: DryRunResult = SimplePipelineRunner.dryRun(config)
+
+        result shouldBe a[DryRunResult.Valid]
+        val valid: DryRunResult.Valid = result.asInstanceOf[DryRunResult.Valid]
+        valid.pipelineName shouldBe "DryRun Valid"
+        valid.componentCount shouldBe 1
+        valid.isValid shouldBe true
+        ExecutionTracker.executedComponents shouldBe empty
+      }
+
+      it("should return Invalid with ComponentInstantiationError for nonexistent class") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Invalid Class"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.NonExistentComponent"
+                instance-name = "Ghost"
+                instance-config {}
+              }
+            ]
+          }
+        """)
+
+        val result: DryRunResult = SimplePipelineRunner.dryRun(config)
+
+        result shouldBe a[DryRunResult.Invalid]
+        val invalid: DryRunResult.Invalid = result.asInstanceOf[DryRunResult.Invalid]
+        invalid.errors.head shouldBe a[DryRunError.ComponentInstantiationError]
+        invalid.isInvalid shouldBe true
+      }
+
+      it("should return Invalid with ConfigParseError when pipeline block is missing") {
+        val config: Config = ConfigFactory.parseString("""
+          spark { master = "local[1]" }
+        """)
+
+        val result: DryRunResult = SimplePipelineRunner.dryRun(config)
+
+        result shouldBe a[DryRunResult.Invalid]
+        result.asInstanceOf[DryRunResult.Invalid].errors.head shouldBe a[DryRunError.ConfigParseError]
+      }
+
+      it("should collect all component errors instead of stopping at first") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Multiple Errors"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Valid"
+                instance-config { component-id = "valid" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.NonExistent1"
+                instance-name = "Ghost1"
+                instance-config {}
+              },
+              {
+                instance-type = "io.github.dwsmith1983.NonExistent2"
+                instance-name = "Ghost2"
+                instance-config {}
+              }
+            ]
+          }
+        """)
+
+        val result: DryRunResult = SimplePipelineRunner.dryRun(config)
+
+        result shouldBe a[DryRunResult.Invalid]
+        result.asInstanceOf[DryRunResult.Invalid].errors should have size 2
+      }
+    }
+
+    // =========================================================================
+    // FAIL-FAST / CONTINUE-ON-ERROR TESTS
+    // =========================================================================
+
+    describe("failFast mode") {
+
+      it("should continue execution and return PartialSuccess when failFast is false") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Continue On Error"
+            fail-fast = false
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "First"
+                instance-config { component-id = "continue-first" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailOnRunComponent"
+                instance-name = "Failure"
+                instance-config { fail-message = "expected failure" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Third"
+                instance-config { component-id = "continue-third" }
+              }
+            ]
+          }
+        """)
+
+        noException should be thrownBy {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        (ExecutionTracker.executedComponents should contain).allOf("continue-first", "continue-third")
+        HooksTracker.lastResult shouldBe a[PipelineResult.PartialSuccess]
+        val partial: PipelineResult.PartialSuccess = HooksTracker.lastResult.asInstanceOf[PipelineResult.PartialSuccess]
+        partial.componentsSucceeded shouldBe 2
+        partial.componentsFailed shouldBe 1
+        partial.failures.head._1.instanceName shouldBe "Failure"
+      }
+
+      it("should return Success when failFast is false and all components succeed") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "All Success"
+            fail-fast = false
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "One"
+                instance-config { component-id = "success-1" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Two"
+                instance-config { component-id = "success-2" }
+              }
+            ]
+          }
+        """)
+
+        SimplePipelineRunner.run(config, HooksTracker)
+
+        HooksTracker.lastResult shouldBe a[PipelineResult.Success]
+      }
+
+      it("should stop and throw on first failure when failFast is true (default)") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "FailFast Default"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Before"
+                instance-config { component-id = "failfast-before" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailOnRunComponent"
+                instance-name = "Failure"
+                instance-config { fail-message = "stop here" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "After"
+                instance-config { component-id = "failfast-after" }
+              }
+            ]
+          }
+        """)
+
+        intercept[RuntimeException] {
+          SimplePipelineRunner.run(config)
+        }
+
+        ExecutionTracker.executedComponents should contain("failfast-before")
+        ExecutionTracker.executedComponents should not contain "failfast-after"
+      }
+
+      it("should invoke onComponentFailure for each failure when failFast is false") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Multiple Failures"
+            fail-fast = false
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailOnRunComponent"
+                instance-name = "Fail1"
+                instance-config { fail-message = "one" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailOnRunComponent"
+                instance-name = "Fail2"
+                instance-config { fail-message = "two" }
+              }
+            ]
+          }
+        """)
+
+        SimplePipelineRunner.run(config, HooksTracker)
+
+        HooksTracker.events should contain("onComponentFailure:Fail1:0")
+        HooksTracker.events should contain("onComponentFailure:Fail2:1")
+      }
+    }
   }
 }
 
@@ -765,8 +1007,9 @@ object HooksTracker extends PipelineHooks {
 
   override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit = {
     val resultType: String = result match {
-      case _: PipelineResult.Success => "Success"
-      case _: PipelineResult.Failure => "Failure"
+      case _: PipelineResult.Success        => "Success"
+      case _: PipelineResult.Failure        => "Failure"
+      case _: PipelineResult.PartialSuccess => "PartialSuccess"
     }
     events += s"afterPipeline:${config.pipelineName}:$resultType"
     lastResult = result
