@@ -13,7 +13,7 @@ ConfigurableInstance (companion object)
 DataFlow (class) extends:
     ├── PipelineComponent  → run(): Unit
     ├── SparkSessionWrapper → spark: SparkSession
-    └── Logging            → logInfo(), logError(), etc.
+    └── logger: Logger     → logger.info(), logger.error(), etc.
 ```
 
 ## Creating a Component
@@ -53,7 +53,7 @@ import io.github.dwsmith1983.spark.pipeline.runtime.DataFlow
 class WordCount(conf: WordCount.Config) extends DataFlow {
 
   override def run(): Unit = {
-    logInfo(s"Reading from ${conf.inputPath}")
+    logger.info(s"Reading from ${conf.inputPath}")
 
     val words = spark.read.textFile(conf.inputPath)
       .flatMap(_.split("\\s+"))
@@ -62,10 +62,10 @@ class WordCount(conf: WordCount.Config) extends DataFlow {
       .count()
       .filter($"count" >= conf.minCount)
 
-    logInfo(s"Writing to ${conf.outputPath}")
+    logger.info(s"Writing to ${conf.outputPath}")
     words.write.mode("overwrite").parquet(conf.outputPath)
 
-    logInfo(s"Completed with ${words.count()} words")
+    logger.info(s"Completed with ${words.count()} words")
   }
 }
 ```
@@ -109,33 +109,33 @@ class MyComponent(conf: MyComponent.Config) extends DataFlow {
 
 ## Logging
 
-The `DataFlow` trait includes Log4j2 logging:
+The `DataFlow` trait provides a Log4j2 logger instance:
 
 ```scala
 class MyComponent(conf: MyComponent.Config) extends DataFlow {
   override def run(): Unit = {
-    logInfo("Starting processing")
-    logDebug(s"Configuration: $conf")
+    logger.info("Starting processing")
+    logger.debug(s"Configuration: $conf")
 
     try {
       // processing...
     } catch {
       case e: Exception =>
-        logError("Processing failed", e)
+        logger.error("Processing failed", e)
         throw e
     }
 
-    logInfo("Processing complete")
+    logger.info("Processing complete")
   }
 }
 ```
 
 Available logging methods:
-- `logTrace(msg)`, `logTrace(msg, throwable)`
-- `logDebug(msg)`, `logDebug(msg, throwable)`
-- `logInfo(msg)`, `logInfo(msg, throwable)`
-- `logWarning(msg)`, `logWarning(msg, throwable)`
-- `logError(msg)`, `logError(msg, throwable)`
+- `logger.trace(msg)`, `logger.trace(msg, throwable)`
+- `logger.debug(msg)`, `logger.debug(msg, throwable)`
+- `logger.info(msg)`, `logger.info(msg, throwable)`
+- `logger.warn(msg)`, `logger.warn(msg, throwable)`
+- `logger.error(msg)`, `logger.error(msg, throwable)`
 
 ## Configuration Patterns
 
