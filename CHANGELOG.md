@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.10...v0.1.11) (2025-12-24)
+
+
+### Features
+
+* add ConfigurationException to wrap PureConfig errors ([#32](https://github.com/dwsmith1983/spark-pipeline-framework/issues/32)) ([d946e84](https://github.com/dwsmith1983/spark-pipeline-framework/commit/d946e84a5b2627e1bda2830098e778adb3952edb))
+
 ## [0.1.10](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.9...v0.1.10) (2025-12-21)
 
 
