@@ -181,11 +181,15 @@ object SimplePipelineRunner extends PipelineRunner {
         }
         throw e
       case e: pureconfig.error.ConfigReaderException[_] =>
-        logger.error(s"Configuration error: ${e.getMessage}", e)
+        val wrapped: ConfigurationException = ConfigurationException.fromConfigReaderException(e)
+        logger.error(s"Configuration error: ${wrapped.getMessage}", wrapped)
         if (pipelineConfig != null) {
-          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsSucceeded))
+          hooks.afterPipeline(
+            pipelineConfig,
+            PipelineResult.Failure(wrapped, currentComponentConfig, componentsSucceeded)
+          )
         }
-        throw e
+        throw wrapped
       case e: Exception =>
         logger.error(s"Pipeline failed: ${e.getMessage}", e)
         currentComponentConfig.foreach(cc => hooks.onComponentFailure(cc, componentsSucceeded, e))
@@ -297,8 +301,9 @@ object SimplePipelineRunner extends PipelineRunner {
 
     } catch {
       case e: pureconfig.error.ConfigReaderException[_] =>
-        logger.error(s"[dry-run] Configuration error: ${e.getMessage}", e)
-        DryRunResult.Invalid(List(DryRunError.ConfigParseError(e.getMessage, e)))
+        val wrapped: ConfigurationException = ConfigurationException.fromConfigReaderException(e)
+        logger.error(s"[dry-run] Configuration error: ${wrapped.getMessage}", wrapped)
+        DryRunResult.Invalid(List(DryRunError.ConfigParseError(wrapped.getMessage, wrapped)))
       case e: com.typesafe.config.ConfigException =>
         logger.error(s"[dry-run] Configuration error: ${e.getMessage}", e)
         DryRunResult.Invalid(List(DryRunError.ConfigParseError(e.getMessage, e)))

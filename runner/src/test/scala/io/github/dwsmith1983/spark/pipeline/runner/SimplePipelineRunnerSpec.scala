@@ -378,11 +378,11 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
           }
         """)
 
-        val exception: ComponentInstantiationException = intercept[ComponentInstantiationException] {
+        val exception: ConfigurationException = intercept[ConfigurationException] {
           SimplePipelineRunner.run(config)
         }
 
-        exception.getMessage should include("Failed to instantiate")
+        exception.getMessage should include("required-field")
       }
     }
 
