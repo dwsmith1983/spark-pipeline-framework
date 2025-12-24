@@ -201,6 +201,30 @@ object MyComponent extends ConfigurableInstance {
 
 HOCON uses kebab-case (`partition-columns`), which PureConfig automatically maps to camelCase (`partitionColumns`).
 
+## Configuration Errors
+
+When configuration parsing fails, the framework throws a `ConfigurationException` with a detailed error message:
+
+```scala
+import io.github.dwsmith1983.spark.pipeline.config.ConfigurationException
+
+try {
+  SimplePipelineRunner.run(config)
+} catch {
+  case e: ConfigurationException =>
+    // e.getMessage contains formatted error details
+    // e.getCause contains the underlying parsing error
+    println(s"Configuration error: ${e.getMessage}")
+}
+```
+
+Common configuration errors:
+- **Missing required fields**: `Key not found: 'input-path'`
+- **Type mismatches**: `Expected type STRING, found NUMBER at 'output-path'`
+- **Invalid HOCON syntax**: Unbalanced braces, missing quotes, etc.
+
+The error message includes the field path and expected type, making it easy to locate and fix configuration issues.
+
 ## Next Steps
 
 - [Components](./components) - Learn how to build pipeline components

@@ -44,7 +44,7 @@ trait PipelineRunner {
    * This is a convenience method that uses `PipelineHooks.NoOp`.
    *
    * May throw `ComponentInstantiationException` if a component cannot be instantiated,
-   * or `ConfigReaderException` if the configuration is invalid.
+   * or `ConfigurationException` if the configuration is invalid.
    *
    * @param config The loaded HOCON configuration containing `pipeline` and optionally `spark` blocks
    */
@@ -54,7 +54,7 @@ trait PipelineRunner {
    * Runs the pipeline defined in the given configuration with lifecycle hooks.
    *
    * May throw `ComponentInstantiationException` if a component cannot be instantiated,
-   * or `ConfigReaderException` if the configuration is invalid.
+   * or `ConfigurationException` if the configuration is invalid.
    *
    * @param config The loaded HOCON configuration containing `pipeline` and optionally `spark` blocks
    * @param hooks Lifecycle hooks to invoke during execution

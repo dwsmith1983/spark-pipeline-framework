@@ -64,6 +64,10 @@ object ComponentInstantiator {
     } catch {
       case e: ComponentInstantiationException =>
         throw e
+      case e: ConfigurationException =>
+        throw e
+      case e: pureconfig.error.ConfigReaderException[_] =>
+        throw ConfigurationException.fromConfigReaderException(e)
       case e: NoSuchFieldException =>
         throw new ComponentInstantiationException(
           s"Could not find companion object for: $className. " +

@@ -1,0 +1,43 @@
+# Configuration for actions/labeler
+# Labels PRs based on the files changed
+
+core:
+  - changed-files:
+      - any-glob-to-any-file: 'core/**/*'
+
+runner:
+  - changed-files:
+      - any-glob-to-any-file: 'runner/**/*'
+
+runtime:
+  - changed-files:
+      - any-glob-to-any-file: 'runtime/**/*'
+
+example:
+  - changed-files:
+      - any-glob-to-any-file: 'example/**/*'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'website/**/*'
+          - '**/*.md'
+          - 'docs/**/*'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: '**/src/test/**/*'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**/*'
+          - '.scalafmt.conf'
+          - 'scalastyle-config.xml'
+
+build:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'build.sbt'
+          - 'project/**/*'
+          - '.scalafix.conf'

@@ -163,7 +163,7 @@ class ComponentInstantiatorSpec extends AnyFunSpec with Matchers with BeforeAndA
         exception.getMessage should include("does not extend ConfigurableInstance")
       }
 
-      it("should throw ComponentInstantiationException for missing required config fields") {
+      it("should throw ConfigurationException for missing required config fields") {
         val config = ComponentConfig(
           instanceType = "io.github.dwsmith1983.spark.pipeline.config.TestComponent",
           instanceName = "MissingFields",
@@ -173,14 +173,14 @@ class ComponentInstantiatorSpec extends AnyFunSpec with Matchers with BeforeAndA
           """)
         )
 
-        val exception = intercept[ComponentInstantiationException] {
+        val exception = intercept[ConfigurationException] {
           ComponentInstantiator.instantiate[TestComponent](config)
         }
 
-        exception.getMessage should include("Failed to instantiate component")
+        exception.getMessage should include("value")
       }
 
-      it("should throw ComponentInstantiationException for wrong config type") {
+      it("should throw ConfigurationException for wrong config type") {
         val config = ComponentConfig(
           instanceType = "io.github.dwsmith1983.spark.pipeline.config.TestComponent",
           instanceName = "WrongType",
@@ -190,11 +190,11 @@ class ComponentInstantiatorSpec extends AnyFunSpec with Matchers with BeforeAndA
           """)
         )
 
-        val exception = intercept[ComponentInstantiationException] {
+        val exception = intercept[ConfigurationException] {
           ComponentInstantiator.instantiate[TestComponent](config)
         }
 
-        exception.getMessage should include("Failed to instantiate component")
+        exception.getMessage should include("value")
       }
 
       it("should return Failure when using tryInstantiate with invalid config") {
