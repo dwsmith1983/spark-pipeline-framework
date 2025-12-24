@@ -47,12 +47,11 @@ import scala.collection.mutable
 class MetricsHooks(
   val meterRegistry: MeterRegistry,
   val metricsPrefix: String = "pipeline",
-  val commonTags: Tags = Tags.empty
-) extends PipelineHooks {
+  val commonTags: Tags = Tags.empty) extends PipelineHooks {
 
-  @volatile private var pipelineStartTime: Long                  = 0L
-  @volatile private var currentPipelineConfig: PipelineConfig    = _
-  private val componentStartTimes: mutable.Map[Int, Long]        = mutable.Map()
+  @volatile private var pipelineStartTime: Long               = 0L
+  @volatile private var currentPipelineConfig: PipelineConfig = _
+  private val componentStartTimes: mutable.Map[Int, Long]     = mutable.Map()
 
   override def beforePipeline(config: PipelineConfig): Unit = {
     pipelineStartTime = System.currentTimeMillis()
@@ -65,7 +64,12 @@ class MetricsHooks(
     componentStartTimes(index) = System.currentTimeMillis()
   }
 
-  override def afterComponent(config: ComponentConfig, index: Int, total: Int, durationMs: Long): Unit = {
+  override def afterComponent(
+    config: ComponentConfig,
+    index: Int,
+    total: Int,
+    durationMs: Long
+  ): Unit = {
     locally { val _ = total }
     recordComponentMetrics(config.instanceName, durationMs, "success")
     locally { val _ = componentStartTimes.remove(index) }
@@ -73,8 +77,8 @@ class MetricsHooks(
 
   override def onComponentFailure(config: ComponentConfig, index: Int, error: Throwable): Unit = {
     locally { val _ = error }
-    val startTime: Long    = componentStartTimes.getOrElse(index, System.currentTimeMillis())
-    val durationMs: Long   = System.currentTimeMillis() - startTime
+    val startTime: Long  = componentStartTimes.getOrElse(index, System.currentTimeMillis())
+    val durationMs: Long = System.currentTimeMillis() - startTime
     recordComponentMetrics(config.instanceName, durationMs, "failure")
     locally { val _ = componentStartTimes.remove(index) }
   }
@@ -98,9 +102,12 @@ class MetricsHooks(
     val pipelineName: String = Option(currentPipelineConfig).map(_.pipelineName).getOrElse("unknown")
 
     val tags: Tags = Tags.of(
-      "pipeline_name", pipelineName,
-      "component_name", componentName,
-      "status", status
+      "pipeline_name",
+      pipelineName,
+      "component_name",
+      componentName,
+      "status",
+      status
     ).and(commonTags)
 
     Timer.builder(s"$metricsPrefix.component.duration")
@@ -115,8 +122,10 @@ class MetricsHooks(
     val pipelineName: String = Option(currentPipelineConfig).map(_.pipelineName).getOrElse("unknown")
 
     val tags: Tags = Tags.of(
-      "pipeline_name", pipelineName,
-      "status", status
+      "pipeline_name",
+      pipelineName,
+      "status",
+      status
     ).and(commonTags)
 
     Timer.builder(s"$metricsPrefix.duration")
@@ -128,9 +137,7 @@ class MetricsHooks(
   }
 }
 
-/**
- * Factory methods for creating MetricsHooks instances.
- */
+/** Factory methods for creating MetricsHooks instances. */
 object MetricsHooks {
 
   /**
