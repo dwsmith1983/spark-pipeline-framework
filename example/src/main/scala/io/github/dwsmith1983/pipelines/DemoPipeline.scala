@@ -96,8 +96,12 @@ object DemoPipeline {
         }
       """)
 
-      // Create metrics hooks to monitor execution
-      val metrics = new MetricsHooks()
+      // Create demo metrics hooks to monitor execution
+      // For production, use the Micrometer-based MetricsHooks from core:
+      //   import io.github.dwsmith1983.spark.pipeline.config.MetricsHooks
+      //   val registry = new SimpleMeterRegistry()
+      //   val hooks = MetricsHooks(registry)
+      val metrics = new DemoMetricsHooks()
 
       // Custom logging hooks to show execution flow
       val loggingHooks = new PipelineHooks {

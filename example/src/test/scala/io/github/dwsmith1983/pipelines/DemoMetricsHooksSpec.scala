@@ -12,11 +12,11 @@ import org.scalatest.BeforeAndAfterAll
 import java.nio.file.{Files, Path}
 
 /**
- * Tests for MetricsHooks example implementation.
+ * Tests for DemoMetricsHooks example implementation.
  *
  * Demonstrates practical usage of PipelineHooks for metrics collection.
  */
-class MetricsHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
+class DemoMetricsHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
   var tempDir: Path   = _
   var inputFile: Path = _
@@ -48,7 +48,7 @@ class MetricsHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach 
   override def afterAll(): Unit =
     SparkSessionWrapper.stop()
 
-  describe("MetricsHooks") {
+  describe("DemoMetricsHooks") {
 
     it("should collect metrics for successful pipeline") {
       val config = ConfigFactory.parseString(s"""
@@ -72,7 +72,7 @@ class MetricsHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach 
         }
       """)
 
-      val metrics = MetricsHooks()
+      val metrics = DemoMetricsHooks()
 
       SimplePipelineRunner.run(config, metrics)
 
@@ -108,7 +108,7 @@ class MetricsHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach 
         }
       """)
 
-      val metrics = MetricsHooks()
+      val metrics = DemoMetricsHooks()
       SimplePipelineRunner.run(config, metrics)
 
       val report = metrics.generateReport()
@@ -140,7 +140,7 @@ class MetricsHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach 
         }
       """)
 
-      val metrics = MetricsHooks()
+      val metrics = DemoMetricsHooks()
 
       intercept[Exception] {
         SimplePipelineRunner.run(config, metrics)
@@ -153,7 +153,7 @@ class MetricsHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach 
     }
 
     it("should support reset for reuse") {
-      val metrics = MetricsHooks()
+      val metrics = DemoMetricsHooks()
 
       // Simulate some state
       val config = ConfigFactory.parseString(s"""
@@ -209,8 +209,8 @@ class MetricsHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach 
         }
       """)
 
-      val metrics1 = MetricsHooks()
-      val metrics2 = MetricsHooks()
+      val metrics1 = DemoMetricsHooks()
+      val metrics2 = DemoMetricsHooks()
       val composed = PipelineHooks.compose(metrics1, metrics2)
 
       SimplePipelineRunner.run(config, composed)

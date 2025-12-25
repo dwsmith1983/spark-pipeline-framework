@@ -5,17 +5,30 @@ import io.github.dwsmith1983.spark.pipeline.config._
 import scala.collection.mutable
 
 /**
- * Example PipelineHooks implementation for collecting execution metrics.
+ * Demo PipelineHooks implementation for collecting execution metrics.
  *
- * This demonstrates a practical use case for lifecycle hooks:
- * - Tracking component execution times
- * - Recording success/failure counts
- * - Generating pipeline execution reports
+ * This is a simple, self-contained example that stores metrics in memory.
+ * For production use, prefer the Micrometer-based `MetricsHooks` from the core module:
+ *
+ * {{{
+ * import io.github.dwsmith1983.spark.pipeline.config.MetricsHooks
+ * import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+ *
+ * val registry = new SimpleMeterRegistry() // or PrometheusMeterRegistry, etc.
+ * val hooks = MetricsHooks(registry)
+ * SimplePipelineRunner.run(config, hooks)
+ * }}}
+ *
+ * == When to Use This Demo ==
+ *
+ * - Learning how to implement custom PipelineHooks
+ * - Simple scripts where you don't need external metrics systems
+ * - Testing and development
  *
  * == Usage ==
  *
  * {{{
- * val metrics = new MetricsHooks()
+ * val metrics = new DemoMetricsHooks()
  * SimplePipelineRunner.run(config, metrics)
  *
  * // After execution, access the collected metrics
@@ -30,13 +43,13 @@ import scala.collection.mutable
  *
  * {{{
  * val composed = PipelineHooks.compose(
- *   new MetricsHooks(),
+ *   new DemoMetricsHooks(),
  *   new AlertingHooks(slackWebhook)
  * )
  * SimplePipelineRunner.run(config, composed)
  * }}}
  */
-class MetricsHooks extends PipelineHooks {
+class DemoMetricsHooks extends PipelineHooks {
 
   // Collected metrics
   private var _pipelineName: String                                    = _
@@ -134,9 +147,9 @@ class MetricsHooks extends PipelineHooks {
   }
 }
 
-/** Companion object with a pre-built instance for simple usage. */
-object MetricsHooks {
+/** Companion object with factory method for simple usage. */
+object DemoMetricsHooks {
 
-  /** Creates a new MetricsHooks instance. */
-  def apply(): MetricsHooks = new MetricsHooks()
+  /** Creates a new DemoMetricsHooks instance. */
+  def apply(): DemoMetricsHooks = new DemoMetricsHooks()
 }

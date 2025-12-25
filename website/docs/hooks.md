@@ -50,6 +50,70 @@ For development, use `LoggingHooks.humanReadable()`:
 - **Progress Context**: `component_index` and `total_components`
 - **Error Classification**: `error_type` and `error_message` fields
 
+## Built-in MetricsHooks
+
+The framework includes production-ready `MetricsHooks` that integrate with [Micrometer](https://micrometer.io/), a vendor-neutral metrics facade. This allows you to plug in any supported backend: Prometheus, Datadog, CloudWatch, InfluxDB, and more.
+
+```scala
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import io.github.dwsmith1983.spark.pipeline.config.MetricsHooks
+
+// Create with any Micrometer registry
+val registry = new SimpleMeterRegistry()  // or PrometheusMeterRegistry, etc.
+val hooks = MetricsHooks(registry)
+
+SimplePipelineRunner.run(config, hooks)
+
+// Access metrics after execution
+val pipelineDuration = registry.get("pipeline.duration").timer()
+val componentRuns = registry.get("pipeline.component.runs").counter()
+```
+
+### Available Metrics
+
+| Metric | Type | Tags | Description |
+|--------|------|------|-------------|
+| `pipeline.duration` | Timer | pipeline_name, status | Total pipeline execution time |
+| `pipeline.runs` | Counter | pipeline_name, status | Number of pipeline executions |
+| `pipeline.component.duration` | Timer | pipeline_name, component_name, status | Per-component execution time |
+| `pipeline.component.runs` | Counter | pipeline_name, component_name, status | Component execution count |
+
+### Status Tags
+
+- `success` - Completed without error
+- `failure` - Failed with exception
+- `partial_success` - Some components failed (when `failFast=false`)
+
+### Custom Prefix and Tags
+
+```scala
+import io.micrometer.core.instrument.Tags
+
+// Custom metrics prefix
+val hooks = MetricsHooks.withPrefix(registry, "myapp.pipeline")
+
+// Add common tags (e.g., environment, service name)
+val hooks = MetricsHooks.withTags(
+  registry,
+  "pipeline",
+  Tags.of("env", "production", "service", "etl")
+)
+```
+
+### Prometheus Example
+
+```scala
+import io.micrometer.prometheus.{PrometheusConfig, PrometheusMeterRegistry}
+
+val prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+val hooks = MetricsHooks(prometheusRegistry)
+
+SimplePipelineRunner.run(config, hooks)
+
+// Expose metrics endpoint
+println(prometheusRegistry.scrape())  // Returns Prometheus format
+```
+
 ## PipelineHooks Trait
 
 For custom hooks, implement the `PipelineHooks` trait:
@@ -129,12 +193,15 @@ val loggingHooks = new PipelineHooks {
 SimplePipelineRunner.run(config, loggingHooks)
 ```
 
-## Metrics Collection Example
+## Custom Metrics Collection Example
+
+For simple use cases without external metrics systems, you can implement a custom hooks class.
+For production, use the built-in [MetricsHooks](#built-in-metricshooks) with Micrometer.
 
 ```scala
 import scala.collection.mutable
 
-class MetricsHooks extends PipelineHooks {
+class CustomMetricsHooks extends PipelineHooks {
   private val componentTimings = mutable.LinkedHashMap[String, Long]()
   private var pipelineStartTime: Long = 0L
   private var pipelineResult: Option[PipelineResult] = None

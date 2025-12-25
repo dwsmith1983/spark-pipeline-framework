@@ -15,6 +15,9 @@ A configuration-driven framework for building Spark pipelines with HOCON config 
 - **Dynamic component instantiation** via reflection (no compile-time coupling)
 - **Lifecycle hooks** for monitoring, metrics, and custom error handling
 - **Built-in structured logging** with `LoggingHooks` (JSON format)
+- **Built-in metrics** with `MetricsHooks` (Micrometer integration)
+- **Dry-run validation** for CI/CD config validation without execution
+- **Continue-on-error mode** with `failFast=false` for resilient pipelines
 - **Cross-compilation** support for Spark 3.x (Scala 2.12, 2.13) and Spark 4.x (Scala 2.13)
 - **Clean separation** between framework and user code
 
@@ -127,6 +130,25 @@ Output (JSON format):
 {"event":"pipeline_end","run_id":"abc-123","duration_ms":5000,"status":"success","components_completed":3}
 ```
 
+### Built-in MetricsHooks
+
+Use the built-in `MetricsHooks` for production metrics via [Micrometer](https://micrometer.io/):
+
+```scala
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import io.github.dwsmith1983.spark.pipeline.config.MetricsHooks
+
+val registry = new SimpleMeterRegistry() // or PrometheusMeterRegistry, DatadogMeterRegistry, etc.
+val hooks = MetricsHooks(registry)
+SimplePipelineRunner.run(config, hooks)
+
+// Access metrics
+val duration = registry.get("pipeline.duration").timer()
+val runs = registry.get("pipeline.component.runs").counter()
+```
+
+Metrics include: `pipeline.duration`, `pipeline.runs`, `pipeline.component.duration`, `pipeline.component.runs` - all tagged with `pipeline_name`, `status`, and `component_name`.
+
 ### Custom Hooks
 
 For custom behavior, implement the `PipelineHooks` trait:
@@ -167,7 +189,7 @@ sbt examplespark3/package
 spark-submit \
   --class io.github.dwsmith1983.pipelines.DemoPipeline \
   --master "local[*]" \
-  example/target/spark3-jvm-2.13/spark-pipeline-example-spark3_2.13-0.1.2.jar
+  example/target/spark3-jvm-2.13/spark-pipeline-example-spark3_2.13-<version>.jar
 ```
 
 The demo will:
@@ -220,8 +242,10 @@ Component Timings:
 
 See `example/src/main/scala/io/github/dwsmith1983/pipelines/` for:
 - `WordCount.scala` - Example component
-- `MetricsHooks.scala` - Metrics collection hooks
+- `DemoMetricsHooks.scala` - Simple in-memory metrics (for learning/demos)
 - `DemoPipeline.scala` - End-to-end runnable demo
+
+**Note:** For production metrics, use the Micrometer-based `MetricsHooks` from the core module (see [Built-in MetricsHooks](#built-in-metricshooks)).
 
 ## Cross-Compilation Matrix
 

@@ -109,19 +109,33 @@ object PipelineHooks {
   /**
    * Combines multiple hooks into a single hook that calls each in order.
    *
+   * Exceptions thrown by individual hooks are caught and logged to stderr,
+   * allowing subsequent hooks to still be called. This ensures that a
+   * failing logging hook won't prevent metrics collection, for example.
+   *
    * @param hooks The hooks to combine
    * @return A composite hook that delegates to all provided hooks
    */
   def compose(hooks: PipelineHooks*): PipelineHooks = new PipelineHooks {
 
+    private def safeCall(hookName: String)(f: PipelineHooks => Unit): Unit =
+      hooks.foreach { hook =>
+        try {
+          f(hook)
+        } catch {
+          case e: Exception =>
+            System.err.println(s"Hook ${hook.getClass.getName}.$hookName failed: ${e.getMessage}")
+        }
+      }
+
     override def beforePipeline(config: PipelineConfig): Unit =
-      hooks.foreach(_.beforePipeline(config))
+      safeCall("beforePipeline")(_.beforePipeline(config))
 
     override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit =
-      hooks.foreach(_.afterPipeline(config, result))
+      safeCall("afterPipeline")(_.afterPipeline(config, result))
 
     override def beforeComponent(config: ComponentConfig, index: Int, total: Int): Unit =
-      hooks.foreach(_.beforeComponent(config, index, total))
+      safeCall("beforeComponent")(_.beforeComponent(config, index, total))
 
     override def afterComponent(
       config: ComponentConfig,
@@ -129,9 +143,9 @@ object PipelineHooks {
       total: Int,
       durationMs: Long
     ): Unit =
-      hooks.foreach(_.afterComponent(config, index, total, durationMs))
+      safeCall("afterComponent")(_.afterComponent(config, index, total, durationMs))
 
     override def onComponentFailure(config: ComponentConfig, index: Int, error: Throwable): Unit =
-      hooks.foreach(_.onComponentFailure(config, index, error))
+      safeCall("onComponentFailure")(_.onComponentFailure(config, index, error))
   }
 }
