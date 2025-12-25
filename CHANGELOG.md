@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.11...v0.1.12) (2025-12-25)
+
+
+### Features
+
+* add MetricsHooks with Micrometer integration ([#34](https://github.com/dwsmith1983/spark-pipeline-framework/issues/34)) ([0e2d1ed](https://github.com/dwsmith1983/spark-pipeline-framework/commit/0e2d1ed6a930c9780bc1896d14b2b0f8f23726a5))
+
 ## [0.1.11](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.10...v0.1.11) (2025-12-24)
 
 
