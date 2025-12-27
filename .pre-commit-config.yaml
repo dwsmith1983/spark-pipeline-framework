@@ -7,9 +7,17 @@
 # Manual run:
 #   pre-commit run --all-files
 #
+# Tool Responsibilities:
+#   scalafmt   → Formatting (whitespace, indentation, import order)
+#   scalastyle → Style rules (naming, complexity, method length)
+#   scalafix   → Semantic linting (unused imports/vars)
+#
+# Note: OWASP dependency check runs only in CI (too slow for pre-commit)
+#
 repos:
   - repo: local
     hooks:
+      # Scalafmt: Formatting (whitespace, indentation, import order)
       - id: scalafmt
         name: scalafmt
         entry: sbt --error scalafmtCheckAll
@@ -18,9 +26,19 @@ repos:
         types: [scala]
         stages: [pre-commit]
 
+      # Scalastyle: Style rules (naming, complexity, method length)
       - id: scalastyle
         name: scalastyle
         entry: sbt --error scalastyle
+        language: system
+        pass_filenames: false
+        types: [scala]
+        stages: [pre-commit]
+
+      # Scalafix: Semantic linting (unused imports/vars, dangerous patterns)
+      - id: scalafix
+        name: scalafix
+        entry: sbt --error "scalafixAll --check"
         language: system
         pass_filenames: false
         types: [scala]

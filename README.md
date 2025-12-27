@@ -16,6 +16,7 @@ A configuration-driven framework for building Spark pipelines with HOCON config 
 - **Lifecycle hooks** for monitoring, metrics, and custom error handling
 - **Built-in structured logging** with `LoggingHooks` (JSON format)
 - **Built-in metrics** with `MetricsHooks` (Micrometer integration)
+- **Built-in audit trails** with `AuditHooks` (JSON Lines, sensitive value filtering)
 - **Dry-run validation** for CI/CD config validation without execution
 - **Continue-on-error mode** with `failFast=false` for resilient pipelines
 - **Cross-compilation** support for Spark 3.x (Scala 2.12, 2.13) and Spark 4.x (Scala 2.13)
@@ -149,6 +150,42 @@ val runs = registry.get("pipeline.component.runs").counter()
 
 Metrics include: `pipeline.duration`, `pipeline.runs`, `pipeline.component.duration`, `pipeline.component.runs` - all tagged with `pipeline_name`, `status`, and `component_name`.
 
+### Built-in AuditHooks
+
+Use the built-in `AuditHooks` for persistent execution audit trails with security filtering:
+
+```scala
+import io.github.dwsmith1983.spark.pipeline.audit._
+
+// Basic file-based audit trail (JSON Lines format)
+val auditHooks = AuditHooks.toFile("/var/log/pipeline-audit.jsonl")
+SimplePipelineRunner.run(config, auditHooks)
+
+// With custom run ID for correlation
+val auditHooks = AuditHooks.toFile("/var/log/audit.jsonl", runId = "job-12345")
+
+// With custom filtering for sensitive values
+val customFilter = ConfigFilter.withAdditionalPatterns(Set("internal_key"))
+val auditHooks = new AuditHooks(
+  sink = AuditSink.file("/var/log/audit.jsonl"),
+  configFilter = customFilter
+)
+```
+
+AuditHooks captures pipeline/component lifecycle events with rich context:
+- System info (hostname, JVM version, Spark version)
+- Component configuration (with sensitive values redacted)
+- Execution timing and status
+- Error details with optional stack traces
+
+Output (JSON Lines format):
+```json
+{"event_type":"pipeline_start","run_id":"job-123","pipeline_name":"MyPipeline","component_count":3,"timestamp":"..."}
+{"event_type":"component_start","component_name":"Transform","component_config":{"password":"***REDACTED***"}}
+{"event_type":"component_end","component_name":"Transform","duration_ms":1523,"status":"success"}
+{"event_type":"pipeline_end","status":"success","duration_ms":5000,"components_completed":3}
+```
+
 ### Custom Hooks
 
 For custom behavior, implement the `PipelineHooks` trait:
@@ -243,9 +280,12 @@ Component Timings:
 See `example/src/main/scala/io/github/dwsmith1983/pipelines/` for:
 - `WordCount.scala` - Example component
 - `DemoMetricsHooks.scala` - Simple in-memory metrics (for learning/demos)
-- `DemoPipeline.scala` - End-to-end runnable demo
+- `DemoPipeline.scala` - End-to-end runnable demo with metrics
+- `DemoAuditPipeline.scala` - Audit trail demo with security filtering
 
-**Note:** For production metrics, use the Micrometer-based `MetricsHooks` from the core module (see [Built-in MetricsHooks](#built-in-metricshooks)).
+**Note:** For production, use the built-in hooks from the core module:
+- `MetricsHooks` - Micrometer integration (see [Built-in MetricsHooks](#built-in-metricshooks))
+- `AuditHooks` - Persistent audit trails (see [Built-in AuditHooks](#built-in-audithooks))
 
 ## Cross-Compilation Matrix
 

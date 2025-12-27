@@ -44,8 +44,24 @@ ThisBuild / publishTo := sonatypePublishToBundle.value
 // Resolve dependency conflicts
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 
+// =============================================================================
+// Code Quality Tools Configuration
+// =============================================================================
+
 // Scalafmt - format on compile (optional, can be disabled)
 ThisBuild / scalafmtOnCompile := false
+
+// Scalafix - enable SemanticDB for semantic rules (RemoveUnused, etc.)
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+
+// OWASP Dependency Check - security vulnerability scanning
+// Run: sbt dependencyCheck
+// Fails build if CVSS score >= 7 (high/critical vulnerabilities)
+dependencyCheckFailBuildOnCVSS := 7
+dependencyCheckSuppressionFiles := Seq(
+  (ThisBuild / baseDirectory).value / "dependency-check-suppressions.xml"
+)
 
 // Code coverage settings
 ThisBuild / coverageMinimumStmtTotal := 75

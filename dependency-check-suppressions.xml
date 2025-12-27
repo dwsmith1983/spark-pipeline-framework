@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OWASP Dependency Check Suppressions
+
+  This file contains suppressions for known false positives or accepted risks.
+
+  When adding a suppression:
+  1. Document WHY it's being suppressed
+  2. Link to the CVE for reference
+  3. Add a review date for periodic reassessment
+
+  Run: sbt dependencyCheck
+  Report: target/dependency-check-report.html
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+  <!--
+    Example suppression (uncomment if needed):
+
+    <suppress>
+      <notes><![CDATA[
+        CVE-XXXX-XXXXX: Description of the vulnerability
+        Reason: Why this is a false positive or accepted risk
+        Review: 2025-06-01
+      ]]></notes>
+      <packageUrl regex="true">^pkg:maven/com\.example/artifact@.*$</packageUrl>
+      <cve>CVE-XXXX-XXXXX</cve>
+    </suppress>
+  -->
+
+  <!--
+    Spark-related suppressions may be needed since Spark has transitive
+    dependencies that sometimes flag. Add them here as encountered.
+  -->
+
+</suppressions>

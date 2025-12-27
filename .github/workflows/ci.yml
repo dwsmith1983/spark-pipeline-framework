@@ -22,11 +22,47 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
+      # Scalafmt: Formatting (whitespace, indentation, import order)
       - name: Check formatting (scalafmt)
         run: sbt scalafmtCheckAll
 
+      # Scalastyle: Style rules (naming, complexity, method length)
       - name: Check style (scalastyle)
         run: sbt scalastyle
+
+      # Scalafix: Semantic linting (unused imports/vars, dangerous patterns)
+      - name: Check semantic rules (scalafix)
+        run: sbt "scalafixAll --check"
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      # OWASP Dependency Check: Scan dependencies for known CVEs
+      # Fails if any dependency has CVSS score >= 7 (High/Critical)
+      - name: OWASP Dependency Check
+        run: sbt dependencyCheck
+
+      - name: Upload OWASP report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-report
+          path: target/dependency-check-report.html
+          retention-days: 30
 
   test-spark3:
     name: Test (Spark 3 / Scala 2.12)

@@ -1,5 +1,7 @@
 package io.github.dwsmith1983.spark.pipeline.config
 
+import org.apache.logging.log4j.{LogManager, Logger}
+
 /**
  * Lifecycle hooks for pipeline execution.
  *
@@ -103,13 +105,15 @@ trait PipelineHooks {
 
 object PipelineHooks {
 
+  private val logger: Logger = LogManager.getLogger(classOf[PipelineHooks])
+
   /** A no-op implementation that does nothing at each hook point. */
   val NoOp: PipelineHooks = new PipelineHooks {}
 
   /**
    * Combines multiple hooks into a single hook that calls each in order.
    *
-   * Exceptions thrown by individual hooks are caught and logged to stderr,
+   * Exceptions thrown by individual hooks are caught and logged,
    * allowing subsequent hooks to still be called. This ensures that a
    * failing logging hook won't prevent metrics collection, for example.
    *
@@ -124,7 +128,12 @@ object PipelineHooks {
           f(hook)
         } catch {
           case e: Exception =>
-            System.err.println(s"Hook ${hook.getClass.getName}.$hookName failed: ${e.getMessage}")
+            logger.warn(
+              "Hook {}.{} failed: {}",
+              hook.getClass.getName: Any,
+              hookName: Any,
+              e.getMessage: Any
+            )
         }
       }
 

@@ -114,6 +114,133 @@ SimplePipelineRunner.run(config, hooks)
 println(prometheusRegistry.scrape())  // Returns Prometheus format
 ```
 
+## Built-in AuditHooks
+
+The framework includes `AuditHooks` for persistent execution audit trails. Events are written as JSON Lines (one JSON object per line), making them easy to process with standard tools, ingest into log aggregators, or stream to external systems.
+
+```scala
+import io.github.dwsmith1983.spark.pipeline.audit._
+
+// Basic file-based audit trail
+val hooks = AuditHooks.toFile("/var/log/pipeline-audit.jsonl")
+SimplePipelineRunner.run(config, hooks)
+
+// With custom run ID for correlation
+val hooks = AuditHooks.toFile("/var/log/audit.jsonl", runId = "job-12345")
+```
+
+### Audit Events
+
+AuditHooks captures five event types:
+
+| Event Type | When | Key Fields |
+|------------|------|------------|
+| `pipeline_start` | Before first component | pipeline_name, component_count, fail_fast |
+| `pipeline_end` | After completion/failure | status, duration_ms, components_completed, error_* |
+| `component_start` | Before each component | component_name, component_type, component_config |
+| `component_end` | After each component | duration_ms, status |
+| `component_failure` | On component error | error_type, error_message, stack_trace |
+
+### Rich Execution Context
+
+Every event includes system context:
+
+```json
+{
+  "event_type": "pipeline_start",
+  "event_id": "550e8400-e29b-41d4-a716-446655440000",
+  "run_id": "job-12345",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "pipeline_name": "DailyETL",
+  "component_count": 5,
+  "fail_fast": true,
+  "system_context": {
+    "hostname": "worker-node-1",
+    "jvm_version": "17.0.2",
+    "scala_version": "2.13.12",
+    "spark_version": "3.5.0",
+    "application_id": "app-20240115103000-0001",
+    "environment": {
+      "SPARK_HOME": "/opt/spark",
+      "JAVA_HOME": "/usr/lib/jvm/java-17"
+    }
+  }
+}
+```
+
+### Security: Sensitive Value Filtering
+
+AuditHooks automatically redacts sensitive configuration values (passwords, tokens, API keys) and limits environment variables to an allowlist:
+
+```scala
+// Default filtering (recommended)
+val hooks = AuditHooks.toFile("/var/log/audit.jsonl")
+
+// Extend default patterns with custom sensitive keys
+val customConfigFilter = ConfigFilter.withAdditionalPatterns(Set("internal_key", "company_secret"))
+val customEnvFilter = EnvFilter.withAdditionalAllowedKeys(Set("MY_APP_ENV"))
+
+val hooks = new AuditHooks(
+  sink = AuditSink.file("/var/log/audit.jsonl"),
+  configFilter = customConfigFilter,
+  envFilter = customEnvFilter
+)
+
+// Replace defaults entirely (use with caution)
+val strictFilter = ConfigFilter.withPatterns(Set("password", "secret"))
+```
+
+### Spark Context Enrichment
+
+For richer context including Spark application details, use `SparkAuditContextProvider`:
+
+```scala
+import io.github.dwsmith1983.spark.pipeline.audit._
+
+val hooks = new AuditHooks(
+  sink = AuditSink.file("/var/log/audit.jsonl"),
+  contextProvider = SparkAuditContextProvider()
+)
+
+// Events will include spark_context with application_id, master, spark_version, etc.
+```
+
+### Custom Sinks
+
+Implement `AuditSink` to write events to external systems:
+
+```scala
+trait AuditSink {
+  def write(event: AuditEvent): Unit
+  def flush(): Unit
+  def close(): Unit
+}
+
+// File sink (built-in)
+val fileSink = AuditSink.file("/var/log/audit.jsonl")
+
+// Compose multiple sinks
+val compositeSink = AuditSink.compose(
+  AuditSink.file("/var/log/audit.jsonl"),
+  new KafkaAuditSink(kafkaProducer, "audit-topic"),
+  new S3AuditSink(s3Client, "my-bucket/audits/")
+)
+
+val hooks = AuditHooks(compositeSink)
+```
+
+### Combining with Other Hooks
+
+```scala
+val combined = PipelineHooks.compose(
+  AuditHooks.toFile("/var/log/audit.jsonl"),
+  MetricsHooks(prometheusRegistry),
+  LoggingHooks.structured()
+)
+
+SimplePipelineRunner.run(config, combined)
+```
+
 ## PipelineHooks Trait
 
 For custom hooks, implement the `PipelineHooks` trait:
@@ -319,26 +446,36 @@ class DatadogHooks(statsdClient: StatsDClient) extends PipelineHooks {
 
 ### Audit Logging
 
-```scala
-class AuditHooks(auditLogger: Logger) extends PipelineHooks {
-  override def beforePipeline(config: PipelineConfig): Unit = {
-    auditLogger.info(Map(
-      "event" -> "pipeline_started",
-      "pipeline" -> config.pipelineName,
-      "components" -> config.pipelineComponents.size,
-      "timestamp" -> Instant.now().toString
-    ))
-  }
+For persistent audit trails with rich context and security filtering, use the built-in [AuditHooks](#built-in-audithooks):
 
-  override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit = {
-    auditLogger.info(Map(
-      "event" -> "pipeline_completed",
-      "pipeline" -> config.pipelineName,
-      "status" -> result.getClass.getSimpleName,
-      "timestamp" -> Instant.now().toString
-    ))
+```scala
+import io.github.dwsmith1983.spark.pipeline.audit._
+
+// File-based audit trail with automatic sensitive value redaction
+val auditHooks = AuditHooks.toFile("/var/log/pipeline-audit.jsonl")
+
+// Or with Spark context enrichment
+val auditHooks = new AuditHooks(
+  sink = AuditSink.file("/var/log/audit.jsonl"),
+  contextProvider = SparkAuditContextProvider()
+)
+
+SimplePipelineRunner.run(config, auditHooks)
+```
+
+For custom audit logging to external systems, implement `AuditSink`:
+
+```scala
+class CloudWatchAuditSink(client: CloudWatchLogsClient, logGroup: String) extends AuditSink {
+  override def write(event: AuditEvent): Unit = {
+    val json = AuditEventSerializer.toJson(event)
+    client.putLogEvents(logGroup, json)
   }
+  override def flush(): Unit = {}
+  override def close(): Unit = client.close()
 }
+
+val hooks = AuditHooks(new CloudWatchAuditSink(cloudWatchClient, "/pipeline/audits"))
 ```
 
 ## Running with Hooks
