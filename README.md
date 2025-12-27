@@ -329,19 +329,28 @@ cp scripts/pre-commit.sh .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 
-The hooks will automatically run `scalafmtCheckAll` and `scalastyle` before each commit.
+The hooks will automatically run `scalafmtCheckAll`, `scalastyle`, and `scalafixAll --check` before each commit.
 
 ### Manual Linting
 
 ```bash
-# Check formatting
+# Check formatting (scalafmt)
 sbt scalafmtCheckAll
 
 # Auto-fix formatting
 sbt scalafmtAll
 
-# Check style
+# Check style rules (scalastyle)
 sbt scalastyle
+
+# Check semantic rules (scalafix)
+sbt "scalafixAll --check"
+
+# Auto-fix semantic issues
+sbt scalafixAll
+
+# Security scan (OWASP Dependency Check)
+sbt dependencyCheck
 ```
 
 ## License

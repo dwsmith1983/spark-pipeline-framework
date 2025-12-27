@@ -508,7 +508,11 @@ SimplePipelineRunner.run(config)  // Uses PipelineHooks.NoOp internally
 4. **Async for I/O** - For network calls (Slack, metrics), consider async to avoid blocking
 
 ```scala
+import org.apache.logging.log4j.LogManager
+
 class SafeAlertingHooks extends PipelineHooks {
+  private val logger = LogManager.getLogger(getClass)
+
   override def onComponentFailure(
     config: ComponentConfig,
     index: Int,
@@ -520,7 +524,7 @@ class SafeAlertingHooks extends PipelineHooks {
     } catch {
       case e: Exception =>
         // Log but don't rethrow - hooks shouldn't fail the pipeline
-        System.err.println(s"Alert hook failed: ${e.getMessage}")
+        logger.warn("Alert hook failed: {}", e.getMessage)
     }
   }
 }
