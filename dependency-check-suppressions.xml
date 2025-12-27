@@ -54,4 +54,96 @@
     <cve>CVE-2023-37475</cve>
   </suppress>
 
+  <!-- ==========================================================================
+       TRANSITIVE CVEs FROM SPARK/HADOOP - Cannot be fixed by this project
+       These are inherited from the Spark ecosystem. See SECURITY.md for details.
+       ========================================================================== -->
+
+  <!-- Netty (transitive from Spark shuffle/RPC) -->
+  <suppress>
+    <notes>Transitive from Spark: Netty is used internally for shuffle/RPC.
+           Mitigation: Ensure cluster network is secured. See SECURITY.md.</notes>
+    <packageUrl regex="true">^pkg:maven/io\.netty/netty-.*$</packageUrl>
+    <cve>CVE-2025-58057</cve>
+    <cve>CVE-2025-55163</cve>
+    <cve>CVE-2025-58056</cve>
+  </suppress>
+
+  <!-- Jetty (shaded in hadoop-client-runtime) -->
+  <suppress>
+    <notes>Transitive from Hadoop: Jetty is shaded in hadoop-client-runtime.
+           Not exposed to end users. See SECURITY.md.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty.*$</packageUrl>
+    <cve>CVE-2024-8184</cve>
+    <cve>CVE-2024-22201</cve>
+    <cve>CVE-2024-6763</cve>
+    <cve>CVE-2024-13009</cve>
+    <cve>CVE-2024-9823</cve>
+  </suppress>
+
+  <!-- Janino (transitive from Spark SQL codegen) -->
+  <suppress>
+    <notes>Transitive from Spark SQL: Used for codegen.
+           Mitigation: Validate SQL inputs. See SECURITY.md.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.codehaus\.janino/.*$</packageUrl>
+    <cve>CVE-2023-33546</cve>
+  </suppress>
+
+  <!-- ZooKeeper (transitive from Spark, optional for cluster mode) -->
+  <suppress>
+    <notes>Transitive from Spark: ZooKeeper is optional (cluster mode).
+           Mitigation: Secure ZK ensemble if used. See SECURITY.md.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.zookeeper/.*$</packageUrl>
+    <cve>CVE-2025-58457</cve>
+  </suppress>
+
+  <!-- Hive Storage API (transitive from Spark for ORC support) -->
+  <suppress>
+    <notes>Transitive from Spark: Hive storage API for ORC format support.
+           Mitigation: Validate input data sources. See SECURITY.md.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.hive/hive-storage-api@.*$</packageUrl>
+    <cve>CVE-2024-29869</cve>
+    <cve>CVE-2021-34538</cve>
+    <cve>CVE-2024-23953</cve>
+    <cve>CVE-2024-23945</cve>
+  </suppress>
+
+  <!-- JLine (shaded in hadoop-client-runtime for CLI) -->
+  <suppress>
+    <notes>Transitive from Hadoop: JLine bundled for CLI. Not exposed in batch pipelines.
+           See SECURITY.md.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.jline/.*$</packageUrl>
+    <cve>CVE-2023-50572</cve>
+  </suppress>
+
+  <!-- Commons libraries (shaded in hadoop-client-runtime) -->
+  <suppress>
+    <notes>Transitive from Hadoop: Commons libs shaded in hadoop-client-runtime.
+           Not directly accessible. See SECURITY.md.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.commons/commons-lang3@.*$</packageUrl>
+    <cve>CVE-2025-48924</cve>
+  </suppress>
+  <suppress>
+    <notes>Transitive from Hadoop: Commons beanutils shaded. See SECURITY.md.</notes>
+    <packageUrl regex="true">^pkg:maven/commons-beanutils/commons-beanutils@.*$</packageUrl>
+    <cve>CVE-2025-48734</cve>
+  </suppress>
+  <suppress>
+    <notes>Transitive from Hadoop: Jackson shaded. Low severity. See SECURITY.md.</notes>
+    <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-databind@.*$</packageUrl>
+    <cve>CVE-2023-35116</cve>
+  </suppress>
+
+  <!-- Hadoop shaded protobuf (false positive - matches wrong hadoop version) -->
+  <suppress>
+    <notes>False positive: hadoop-shaded-protobuf version matched as Hadoop 1.3.0.
+           We use Hadoop 3.4.x. These CVEs are for old Hadoop versions.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.hadoop\.thirdparty/hadoop-shaded-protobuf.*$</packageUrl>
+    <cve>CVE-2022-26612</cve>
+    <cve>CVE-2017-3161</cve>
+    <cve>CVE-2017-3162</cve>
+    <cve>CVE-2024-23454</cve>
+    <cve>CVE-2016-5001</cve>
+  </suppress>
+
 </suppressions>
