@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Scalastyle configuration for spark-pipeline-framework.
+
+  RESPONSIBILITY: Style rules and code quality metrics
+  - Naming conventions (classes, methods, packages)
+  - Code complexity (cyclomatic complexity, method length)
+  - File structure (file length, line length)
+  - Dangerous patterns (covariant equals, clone/finalize)
+
+  DEFERS TO:
+  - Scalafmt: All formatting (whitespace, indentation, import order)
+  - Scalafix: Semantic issues (unused imports/vars - requires type info)
+
+  SYNC WITH .scalafmt.conf:
+  - maxLineLength=120 (scalafmt: maxColumn = 120)
+  - tabSize=2 (scalafmt: indent.main = 2)
+
+  Run: sbt scalastyle
+-->
 <scalastyle>
   <name>Scalastyle configuration for spark-pipeline-framework</name>
 

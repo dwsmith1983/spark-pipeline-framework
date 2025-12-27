@@ -449,9 +449,6 @@ case class EmptyConfig()
 
 object TestComponentAllowingEmptyConfig extends ConfigurableInstance {
 
-  import pureconfig._
-  import pureconfig.generic.auto._
-
   override def createFromConfig(conf: Config): TestComponentAllowingEmptyConfig =
     new TestComponentAllowingEmptyConfig()
 }

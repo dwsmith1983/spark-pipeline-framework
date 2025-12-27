@@ -2,7 +2,7 @@ package io.github.dwsmith1983.spark.pipeline.config
 
 import com.typesafe.config.ConfigFactory
 import org.apache.logging.log4j.Level
-import org.apache.logging.log4j.core.{Appender, LogEvent, LoggerContext}
+import org.apache.logging.log4j.core.{LogEvent, LoggerContext}
 import org.apache.logging.log4j.core.appender.AbstractAppender
 import org.apache.logging.log4j.core.config.Property
 import org.apache.logging.log4j.core.layout.PatternLayout
