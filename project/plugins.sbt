@@ -32,7 +32,8 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.11.1")
 
 // OWASP Dependency Check - Security vulnerability scanning
 // Run: sbt dependencyCheck (scans against CVE database)
-addSbtPlugin("net.vonbuchholtz" % "sbt-dependency-check" % "5.1.0")
+// Requires NVD API key: https://nvd.nist.gov/developers/request-an-api-key
+addSbtPlugin("net.nmoncho" % "sbt-dependency-check" % "1.8.4")
 
 // Code coverage
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.12")

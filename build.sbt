@@ -58,10 +58,8 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 // OWASP Dependency Check - security vulnerability scanning
 // Run: sbt dependencyCheck
 // Fails build if CVSS score >= 7 (high/critical vulnerabilities)
-dependencyCheckFailBuildOnCVSS := 7
-dependencyCheckSuppressionFiles := Seq(
-  (ThisBuild / baseDirectory).value / "dependency-check-suppressions.xml"
-)
+// NVD API key set via environment variable in CI
+dependencyCheckFailBuildOnCVSS := 7.0
 
 // Code coverage settings
 ThisBuild / coverageMinimumStmtTotal := 75
