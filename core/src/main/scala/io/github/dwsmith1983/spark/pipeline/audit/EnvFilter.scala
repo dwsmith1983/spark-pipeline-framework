@@ -17,9 +17,7 @@ trait EnvFilter {
   def filter(env: Map[String, String]): Map[String, String]
 }
 
-/**
- * Factory methods and default implementations for EnvFilter.
- */
+/** Factory methods and default implementations for EnvFilter. */
 object EnvFilter {
 
   /** Default allowlist of common safe environment variables */
@@ -131,7 +129,8 @@ class AllowlistEnvFilter(allowedKeys: Set[String]) extends EnvFilter {
 class DenylistEnvFilter(denyPatterns: Set[String]) extends EnvFilter {
 
   override def filter(env: Map[String, String]): Map[String, String] =
-    env.filter { case (key, _) =>
-      !denyPatterns.exists(pattern => key.toUpperCase.contains(pattern.toUpperCase))
+    env.filter {
+      case (key, _) =>
+        !denyPatterns.exists(pattern => key.toUpperCase.contains(pattern.toUpperCase))
     }
 }

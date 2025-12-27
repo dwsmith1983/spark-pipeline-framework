@@ -219,9 +219,7 @@ class AuditHooks(
   }
 }
 
-/**
- * Factory methods for creating AuditHooks instances.
- */
+/** Factory methods for creating AuditHooks instances. */
 object AuditHooks {
 
   /**

@@ -96,7 +96,7 @@ class AuditEventSerializerSpec extends AnyFunSpec with Matchers {
         json should include(""""duration_ms":1000""")
         json should include(""""components_completed":2""")
         json should include(""""components_failed":0""")
-        json should not include "error_type"
+        (json should not).include("error_type")
       }
 
       it("should serialize failure event with error info") {
@@ -222,7 +222,7 @@ class AuditEventSerializerSpec extends AnyFunSpec with Matchers {
         )
 
         val json = AuditEventSerializer.toJson(event)
-        json should not include "stack_trace"
+        (json should not).include("stack_trace")
       }
     }
 

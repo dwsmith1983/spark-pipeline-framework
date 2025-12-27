@@ -47,9 +47,7 @@ trait AuditSink {
   def close(): Unit
 }
 
-/**
- * Factory methods for creating AuditSink instances.
- */
+/** Factory methods for creating AuditSink instances. */
 object AuditSink {
 
   /**

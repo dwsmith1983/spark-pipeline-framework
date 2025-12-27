@@ -69,9 +69,7 @@ sealed trait AuditEvent {
   def sparkContext: Option[SparkExecutionContext]
 }
 
-/**
- * Emitted when pipeline execution begins.
- */
+/** Emitted when pipeline execution begins. */
 final case class PipelineStartEvent(
   eventId: String,
   runId: String,
@@ -85,9 +83,7 @@ final case class PipelineStartEvent(
   override val eventType: String = "pipeline_start"
 }
 
-/**
- * Emitted when pipeline execution completes.
- */
+/** Emitted when pipeline execution completes. */
 final case class PipelineEndEvent(
   eventId: String,
   runId: String,
@@ -105,9 +101,7 @@ final case class PipelineEndEvent(
   override val eventType: String = "pipeline_end"
 }
 
-/**
- * Emitted when a component starts execution.
- */
+/** Emitted when a component starts execution. */
 final case class ComponentStartEvent(
   eventId: String,
   runId: String,
@@ -124,9 +118,7 @@ final case class ComponentStartEvent(
   override val eventType: String = "component_start"
 }
 
-/**
- * Emitted when a component completes successfully.
- */
+/** Emitted when a component completes successfully. */
 final case class ComponentEndEvent(
   eventId: String,
   runId: String,
@@ -144,9 +136,7 @@ final case class ComponentEndEvent(
   override val eventType: String = "component_end"
 }
 
-/**
- * Emitted when a component fails.
- */
+/** Emitted when a component fails. */
 final case class ComponentFailureEvent(
   eventId: String,
   runId: String,

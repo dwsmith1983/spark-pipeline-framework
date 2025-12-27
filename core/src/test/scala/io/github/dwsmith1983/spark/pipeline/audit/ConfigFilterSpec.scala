@@ -123,9 +123,7 @@ class ConfigFilterSpec extends AnyFunSpec with Matchers {
     it("should handle config with only sensitive keys") {
       val config = ConfigFactory.parseString("password = secret, token = abc, api_key = xyz")
       val result = ConfigFilter.default.filter(config)
-      result.values.foreach { value =>
-        value shouldBe "***REDACTED***"
-      }
+      result.values.foreach(value => value shouldBe "***REDACTED***")
     }
 
     it("should handle nested config paths with sensitive names") {
@@ -168,8 +166,8 @@ class ConfigFilterSpec extends AnyFunSpec with Matchers {
         |path = "C:\\Users\\test"
         |""".stripMargin)
       val result = ConfigFilter.default.filter(config)
-      result should contain key "message"
-      result should contain key "path"
+      (result should contain).key("message")
+      (result should contain).key("path")
     }
 
     it("should handle numeric and boolean values") {

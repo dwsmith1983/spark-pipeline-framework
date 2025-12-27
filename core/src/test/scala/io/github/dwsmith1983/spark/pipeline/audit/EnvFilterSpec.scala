@@ -7,36 +7,36 @@ import org.scalatest.matchers.should.Matchers
 class EnvFilterSpec extends AnyFunSpec with Matchers {
 
   val testEnv: Map[String, String] = Map(
-    "JAVA_HOME" -> "/usr/lib/jvm",
-    "SPARK_HOME" -> "/opt/spark",
-    "PATH" -> "/usr/bin:/bin",
-    "USER" -> "testuser",
+    "JAVA_HOME"             -> "/usr/lib/jvm",
+    "SPARK_HOME"            -> "/opt/spark",
+    "PATH"                  -> "/usr/bin:/bin",
+    "USER"                  -> "testuser",
     "AWS_SECRET_ACCESS_KEY" -> "secret123",
-    "DATABASE_PASSWORD" -> "dbpass",
-    "MY_API_KEY" -> "apikey123",
-    "CUSTOM_VAR" -> "custom_value"
+    "DATABASE_PASSWORD"     -> "dbpass",
+    "MY_API_KEY"            -> "apikey123",
+    "CUSTOM_VAR"            -> "custom_value"
   )
 
   describe("EnvFilter.default") {
 
     it("should include JAVA_HOME") {
       val result = EnvFilter.default.filter(testEnv)
-      result should contain key "JAVA_HOME"
+      (result should contain).key("JAVA_HOME")
     }
 
     it("should include SPARK_HOME") {
       val result = EnvFilter.default.filter(testEnv)
-      result should contain key "SPARK_HOME"
+      (result should contain).key("SPARK_HOME")
     }
 
     it("should include PATH") {
       val result = EnvFilter.default.filter(testEnv)
-      result should contain key "PATH"
+      (result should contain).key("PATH")
     }
 
     it("should include USER") {
       val result = EnvFilter.default.filter(testEnv)
-      result should contain key "USER"
+      (result should contain).key("USER")
     }
 
     it("should exclude AWS_SECRET_ACCESS_KEY") {
@@ -60,7 +60,7 @@ class EnvFilterSpec extends AnyFunSpec with Matchers {
     it("should include only specified keys") {
       val filter = EnvFilter.allowlist(Set("JAVA_HOME", "CUSTOM_VAR"))
       val result = filter.filter(testEnv)
-      result.keys should contain only("JAVA_HOME", "CUSTOM_VAR")
+      result.keys should contain only ("JAVA_HOME", "CUSTOM_VAR")
     }
 
     it("should return empty map for non-matching keys") {
@@ -75,8 +75,8 @@ class EnvFilterSpec extends AnyFunSpec with Matchers {
     it("should include defaults plus additional keys") {
       val filter = EnvFilter.withAdditionalAllowedKeys(Set("CUSTOM_VAR"))
       val result = filter.filter(testEnv)
-      result should contain key "JAVA_HOME"
-      result should contain key "CUSTOM_VAR"
+      (result should contain).key("JAVA_HOME")
+      (result should contain).key("CUSTOM_VAR")
     }
 
     it("should still exclude sensitive variables") {
@@ -98,8 +98,8 @@ class EnvFilterSpec extends AnyFunSpec with Matchers {
     it("should include keys not matching patterns") {
       val filter = EnvFilter.denylist(Set("SECRET"))
       val result = filter.filter(testEnv)
-      result should contain key "JAVA_HOME"
-      result should contain key "CUSTOM_VAR"
+      (result should contain).key("JAVA_HOME")
+      (result should contain).key("CUSTOM_VAR")
     }
 
     it("should be case-insensitive") {
@@ -121,8 +121,8 @@ class EnvFilterSpec extends AnyFunSpec with Matchers {
     it("should include safe variables") {
       val filter = EnvFilter.withAdditionalDenyPatterns(Set("CUSTOM"))
       val result = filter.filter(testEnv)
-      result should contain key "JAVA_HOME"
-      result should contain key "PATH"
+      (result should contain).key("JAVA_HOME")
+      (result should contain).key("PATH")
     }
   }
 
@@ -174,9 +174,9 @@ class EnvFilterSpec extends AnyFunSpec with Matchers {
 
     it("should handle environment with only excluded keys") {
       val sensitiveOnly = Map(
-        "AWS_SECRET_KEY"     -> "secret",
-        "DATABASE_PASSWORD"  -> "pass",
-        "API_TOKEN"          -> "token"
+        "AWS_SECRET_KEY"    -> "secret",
+        "DATABASE_PASSWORD" -> "pass",
+        "API_TOKEN"         -> "token"
       )
       val result = EnvFilter.default.filter(sensitiveOnly)
       result shouldBe empty
@@ -214,7 +214,7 @@ class EnvFilterSpec extends AnyFunSpec with Matchers {
       )
       // Default allowlist has "JAVA_HOME" not "java_home"
       val result = EnvFilter.default.filter(env)
-      result should contain key "JAVA_HOME"
+      (result should contain).key("JAVA_HOME")
       result should not contain key("java_home")
     }
 

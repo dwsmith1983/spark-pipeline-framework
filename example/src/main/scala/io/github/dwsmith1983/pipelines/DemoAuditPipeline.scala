@@ -39,10 +39,10 @@ object DemoAuditPipeline {
     println()
 
     // Create temp directories for demo data
-    val tempDir: Path     = Files.createTempDirectory("audit-demo")
-    val inputFile: Path   = tempDir.resolve("sample-text.txt")
-    val outputDir: Path   = tempDir.resolve("wordcount-output")
-    val auditFile: Path   = tempDir.resolve("pipeline-audit.jsonl")
+    val tempDir: Path   = Files.createTempDirectory("audit-demo")
+    val inputFile: Path = tempDir.resolve("sample-text.txt")
+    val outputDir: Path = tempDir.resolve("wordcount-output")
+    val auditFile: Path = tempDir.resolve("pipeline-audit.jsonl")
 
     try {
       // Create sample input data
@@ -92,7 +92,7 @@ object DemoAuditPipeline {
       println("[HOOKS] Setting up audit hooks...")
       val auditHooks = AuditHooks.toFile(
         auditFile.toString,
-        runId = "demo-run-001"  // Custom run ID for correlation
+        runId = "demo-run-001" // Custom run ID for correlation
       )
 
       // Create simple logging hooks for console output
@@ -124,12 +124,13 @@ object DemoAuditPipeline {
       println(s"Total events: ${auditLines.size}")
       println()
 
-      auditLines.zipWithIndex.foreach { case (line, idx) =>
-        println(s"Event ${idx + 1}:")
-        // Pretty print the JSON (basic formatting)
-        val formatted = formatJson(line)
-        println(formatted)
-        println()
+      auditLines.zipWithIndex.foreach {
+        case (line, idx) =>
+          println(s"Event ${idx + 1}:")
+          // Pretty print the JSON (basic formatting)
+          val formatted = formatJson(line)
+          println(formatted)
+          println()
       }
 
       // Highlight security filtering
@@ -182,10 +183,10 @@ object DemoAuditPipeline {
    * In production, use a proper JSON library.
    */
   private def formatJson(json: String): String = {
-    var indent = 0
-    val result = new StringBuilder
+    var indent   = 0
+    val result   = new StringBuilder
     var inString = false
-    var escape = false
+    var escape   = false
 
     for (c <- json) {
       if (escape) {

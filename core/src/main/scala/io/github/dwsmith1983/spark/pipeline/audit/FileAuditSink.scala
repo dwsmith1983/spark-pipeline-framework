@@ -31,11 +31,11 @@ class FileAuditSink(
   val bufferSize: Int = 8192)
   extends AuditSink {
 
-  private val logger: Logger                     = LogManager.getLogger(classOf[FileAuditSink])
-  private val lock                               = new Object
-  @volatile private var writer: BufferedWriter  = _
-  @volatile private var closed: Boolean         = false
-  @volatile private var initialized: Boolean    = false
+  private val logger: Logger                   = LogManager.getLogger(classOf[FileAuditSink])
+  private val lock                             = new Object
+  @volatile private var writer: BufferedWriter = _
+  @volatile private var closed: Boolean        = false
+  @volatile private var initialized: Boolean   = false
 
   private def ensureWriter(): BufferedWriter = {
     if (!initialized) {

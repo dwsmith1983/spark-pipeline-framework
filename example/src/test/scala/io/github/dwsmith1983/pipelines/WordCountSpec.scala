@@ -11,8 +11,6 @@ import org.scalatest.BeforeAndAfterEach
 
 import java.nio.file.{Files, Path}
 
-
-
 /** Comprehensive tests for WordCount component. */
 class WordCountSpec extends AnyFunSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach {
 

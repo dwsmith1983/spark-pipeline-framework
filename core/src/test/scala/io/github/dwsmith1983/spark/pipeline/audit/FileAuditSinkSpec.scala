@@ -11,7 +11,7 @@ import scala.io.Source
 /** Tests for FileAuditSink. */
 class FileAuditSinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
 
-  var tempDir: Path = _
+  var tempDir: Path        = _
   var testFilePath: String = _
 
   val testContext: SystemContext = SystemContext(
@@ -36,10 +36,9 @@ class FileAuditSinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach
     testFilePath = tempDir.resolve("audit.jsonl").toString
   }
 
-  override def afterEach(): Unit = {
+  override def afterEach(): Unit =
     // Clean up temp files
     Files.walk(tempDir).sorted(java.util.Comparator.reverseOrder()).forEach(Files.delete)
-  }
 
   describe("FileAuditSink") {
 
@@ -65,12 +64,12 @@ class FileAuditSinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach
         sink.close()
 
         val lines = Source.fromFile(testFilePath).getLines().toList
-        lines should have length 2
+        (lines should have).length(2)
       }
 
       it("should create parent directories if they don't exist") {
         val nestedPath = tempDir.resolve("nested/dir/audit.jsonl").toString
-        val sink = new FileAuditSink(nestedPath)
+        val sink       = new FileAuditSink(nestedPath)
         sink.write(testEvent)
         sink.flush()
         sink.close()
@@ -90,7 +89,7 @@ class FileAuditSinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach
         sink2.close()
 
         val lines = Source.fromFile(testFilePath).getLines().toList
-        lines should have length 2
+        (lines should have).length(2)
       }
 
       it("should overwrite existing file when append=false") {
@@ -105,7 +104,7 @@ class FileAuditSinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach
         sink2.close()
 
         val lines = Source.fromFile(testFilePath).getLines().toList
-        lines should have length 1
+        (lines should have).length(1)
         lines.head should include("event-456")
       }
     }
@@ -152,7 +151,7 @@ class FileAuditSinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach
         sink.close()
 
         val lines = Source.fromFile(testFilePath).getLines().toList
-        lines should have length 10
+        (lines should have).length(10)
       }
     }
 
@@ -170,9 +169,9 @@ class FileAuditSinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach
 
         // Verify only the first event was written
         val lines = Source.fromFile(testFilePath).getLines().toList
-        lines should have length 1
+        (lines should have).length(1)
         lines.head should include("event-123")
-        lines.head should not include "ignored"
+        (lines.head should not).include("ignored")
       }
 
       it("should handle flush after close gracefully") {
@@ -200,7 +199,7 @@ class FileAuditSinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach
 
       it("should handle I/O errors gracefully during write") {
         // Create a file, then make parent directory read-only
-        val readOnlyDir  = tempDir.resolve("readonly")
+        val readOnlyDir = tempDir.resolve("readonly")
         Files.createDirectory(readOnlyDir)
         val readOnlyFile = readOnlyDir.resolve("audit.jsonl").toString
 

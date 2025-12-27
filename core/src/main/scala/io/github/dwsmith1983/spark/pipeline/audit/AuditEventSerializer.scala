@@ -26,7 +26,7 @@ object AuditEventSerializer {
     case e: ComponentFailureEvent => componentFailureToJson(e)
   }
 
-  private def escapeJson(s: String): String = {
+  private def escapeJson(s: String): String =
     if (s == null) {
       ""
     } else {
@@ -38,17 +38,16 @@ object AuditEventSerializer {
         .replace("\b", "\\b")
         .replace("\f", "\\f")
     }
-  }
 
-  private def mapToJson(m: Map[String, String]): String = {
+  private def mapToJson(m: Map[String, String]): String =
     if (m.isEmpty) {
       "{}"
     } else {
-      m.map { case (k, v) =>
-        s""""${escapeJson(k)}":"${escapeJson(v)}""""
+      m.map {
+        case (k, v) =>
+          s""""${escapeJson(k)}":"${escapeJson(v)}""""
       }.mkString("{", ",", "}")
     }
-  }
 
   private def systemContextToJson(ctx: SystemContext): String = {
     val parts = List(

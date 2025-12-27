@@ -43,9 +43,7 @@ trait AuditContextProvider {
   def getSparkContext(): Option[SparkExecutionContext]
 }
 
-/**
- * Factory methods for AuditContextProvider.
- */
+/** Factory methods for AuditContextProvider. */
 object AuditContextProvider {
 
   /** Default provider - no Spark context */
@@ -60,11 +58,12 @@ object AuditContextProvider {
 class DefaultAuditContextProvider extends AuditContextProvider {
 
   override def getSystemContext(envFilter: EnvFilter): SystemContext = {
-    val hostname = try {
-      InetAddress.getLocalHost.getHostName
-    } catch {
-      case _: Exception => "unknown"
-    }
+    val hostname =
+      try {
+        InetAddress.getLocalHost.getHostName
+      } catch {
+        case _: Exception => "unknown"
+      }
 
     SystemContext(
       hostname = hostname,

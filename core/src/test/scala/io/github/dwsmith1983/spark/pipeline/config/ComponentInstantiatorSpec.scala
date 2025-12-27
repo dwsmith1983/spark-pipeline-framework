@@ -449,7 +449,6 @@ case class EmptyConfig()
 
 object TestComponentAllowingEmptyConfig extends ConfigurableInstance {
 
-
   override def createFromConfig(conf: Config): TestComponentAllowingEmptyConfig =
     new TestComponentAllowingEmptyConfig()
 }

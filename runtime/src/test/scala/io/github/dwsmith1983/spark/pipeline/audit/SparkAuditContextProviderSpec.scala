@@ -9,23 +9,21 @@ import org.scalatest.BeforeAndAfterAll
 /** Tests for SparkAuditContextProvider. */
 class SparkAuditContextProviderSpec extends AnyFunSpec with Matchers with BeforeAndAfterAll {
 
-  override def beforeAll(): Unit = {
+  override def beforeAll(): Unit =
     // Configure a local Spark session for testing
     SparkSessionWrapper.configure(
       SparkConfig(
         master = Some("local[1]"),
         appName = Some("AuditContextTest"),
         config = Map(
-          "spark.ui.enabled" -> "false",
+          "spark.ui.enabled"             -> "false",
           "spark.sql.shuffle.partitions" -> "1"
         )
       )
     )
-  }
 
-  override def afterAll(): Unit = {
+  override def afterAll(): Unit =
     SparkSessionWrapper.stop()
-  }
 
   describe("SparkAuditContextProvider") {
 
@@ -74,11 +72,9 @@ class SparkAuditContextProviderSpec extends AnyFunSpec with Matchers with Before
         val context  = provider.getSystemContext(EnvFilter.allowlist(Set("PATH")))
 
         if (sys.env.contains("PATH")) {
-          context.environment should contain key "PATH"
+          (context.environment should contain).key("PATH")
         }
-        context.environment.keys.foreach { key =>
-          key shouldBe "PATH"
-        }
+        context.environment.keys.foreach(key => key shouldBe "PATH")
       }
     }
 
@@ -120,8 +116,8 @@ class SparkAuditContextProviderSpec extends AnyFunSpec with Matchers with Before
         val context  = provider.getSparkContext()
 
         context.get.sparkProperties.keys.foreach { key =>
-          key.toLowerCase should not include "password"
-          key.toLowerCase should not include "secret"
+          (key.toLowerCase should not).include("password")
+          (key.toLowerCase should not).include("secret")
         }
       }
 
@@ -207,7 +203,7 @@ class SparkAuditContextProviderSpec extends AnyFunSpec with Matchers with Before
         val provider = SparkAuditContextProvider()
         val context  = provider.getSystemContext(EnvFilter.default)
         // Should return either actual hostname or "unknown", never throw
-        context.hostname should (not be empty or be("unknown"))
+        context.hostname should ((not be empty).or(be("unknown")))
       }
     }
   }

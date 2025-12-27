@@ -10,9 +10,7 @@ private[audit] object JavaCompat {
   import scala.collection.JavaConverters._
 
   def configEntries(config: Config): Iterator[(String, String)] =
-    config.entrySet().asScala.iterator.map { entry =>
-      entry.getKey -> entry.getValue.render()
-    }
+    config.entrySet().asScala.iterator.map(entry => entry.getKey -> entry.getValue.render())
 }
 
 /**
@@ -32,9 +30,7 @@ trait ConfigFilter {
   def filter(config: Config): Map[String, String]
 }
 
-/**
- * Factory methods and default implementations for ConfigFilter.
- */
+/** Factory methods and default implementations for ConfigFilter. */
 object ConfigFilter {
 
   /** Default sensitive patterns that are always redacted */
@@ -86,6 +82,7 @@ object ConfigFilter {
    * expose sensitive information in audit logs.
    */
   val passthrough: ConfigFilter = new ConfigFilter {
+
     override def filter(config: Config): Map[String, String] =
       JavaCompat.configEntries(config).toMap
   }
@@ -103,8 +100,9 @@ class PatternConfigFilter(sensitivePatterns: Set[String]) extends ConfigFilter {
   private val RedactedValue = "***REDACTED***"
 
   override def filter(config: Config): Map[String, String] =
-    JavaCompat.configEntries(config).map { case (key, value) =>
-      key -> (if (isSensitive(key)) RedactedValue else value)
+    JavaCompat.configEntries(config).map {
+      case (key, value) =>
+        key -> (if (isSensitive(key)) RedactedValue else value)
     }.toMap
 
   private def isSensitive(key: String): Boolean = {

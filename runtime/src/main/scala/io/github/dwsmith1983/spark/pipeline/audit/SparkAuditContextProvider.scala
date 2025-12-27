@@ -39,19 +39,21 @@ class SparkAuditContextProvider(
   extends AuditContextProvider {
 
   override def getSystemContext(envFilter: EnvFilter): SystemContext = {
-    val hostname = try {
-      InetAddress.getLocalHost.getHostName
-    } catch {
-      case _: Exception => "unknown"
-    }
+    val hostname =
+      try {
+        InetAddress.getLocalHost.getHostName
+      } catch {
+        case _: Exception => "unknown"
+      }
 
-    val (sparkVersion, appId) = try {
-      val spark = SparkSessionWrapper.getOrCreate()
-      val sc    = spark.sparkContext
-      (Some(sc.version), Some(sc.applicationId))
-    } catch {
-      case _: Exception => (None, None)
-    }
+    val (sparkVersion, appId) =
+      try {
+        val spark = SparkSessionWrapper.getOrCreate()
+        val sc    = spark.sparkContext
+        (Some(sc.version), Some(sc.applicationId))
+      } catch {
+        case _: Exception => (None, None)
+      }
 
     SystemContext(
       hostname = hostname,
@@ -73,8 +75,9 @@ class SparkAuditContextProvider(
       // Filter Spark properties using the provided filter's pattern logic
       // We need to manually filter since SparkConf isn't a typesafe Config
       val allProps = conf.getAll.toMap
-      val filteredProps = allProps.filter { case (key, _) =>
-        !isSensitiveSparkKey(key)
+      val filteredProps = allProps.filter {
+        case (key, _) =>
+          !isSensitiveSparkKey(key)
       }
 
       Some(
@@ -84,7 +87,8 @@ class SparkAuditContextProvider(
           master = Some(sc.master),
           sparkVersion = sc.version,
           sparkProperties = filteredProps
-        ))
+        )
+      )
     } catch {
       case _: Exception => None
     }
@@ -95,9 +99,7 @@ class SparkAuditContextProvider(
   }
 }
 
-/**
- * Factory methods for SparkAuditContextProvider.
- */
+/** Factory methods for SparkAuditContextProvider. */
 object SparkAuditContextProvider {
 
   /**

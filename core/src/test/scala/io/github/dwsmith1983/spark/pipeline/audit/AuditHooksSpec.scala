@@ -28,8 +28,8 @@ class TestAuditSink extends AuditSink {
 /** Tests for AuditHooks. */
 class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
 
-  var sink: TestAuditSink  = _
-  var hooks: AuditHooks    = _
+  var sink: TestAuditSink = _
+  var hooks: AuditHooks   = _
 
   val testPipelineConfig: PipelineConfig = PipelineConfig(
     pipelineName = "Test Pipeline",
@@ -61,7 +61,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
       it("should write pipeline_start event on beforePipeline") {
         hooks.beforePipeline(testPipelineConfig)
 
-        sink.events should have length 1
+        (sink.events should have).length(1)
         val event = sink.events.head.asInstanceOf[PipelineStartEvent]
         event.eventType shouldBe "pipeline_start"
         event.runId shouldBe "test-run-123"
@@ -74,7 +74,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.beforePipeline(testPipelineConfig)
         hooks.afterPipeline(testPipelineConfig, PipelineResult.Success(100L, 2))
 
-        sink.events should have length 2
+        (sink.events should have).length(2)
         val event = sink.events.last.asInstanceOf[PipelineEndEvent]
         event.eventType shouldBe "pipeline_end"
         event.status shouldBe "success"
@@ -89,14 +89,14 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.beforePipeline(testPipelineConfig)
         hooks.beforeComponent(testComponentConfig, 0, 2)
 
-        sink.events should have length 2
+        (sink.events should have).length(2)
         val event = sink.events.last.asInstanceOf[ComponentStartEvent]
         event.eventType shouldBe "component_start"
         event.componentName shouldBe "Component1"
         event.componentType shouldBe "com.example.Component1"
         event.componentIndex shouldBe 1
         event.totalComponents shouldBe 2
-        event.componentConfig should contain key "input.path"
+        (event.componentConfig should contain).key("input.path")
       }
 
       it("should write component_end event with duration") {
@@ -104,7 +104,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.beforeComponent(testComponentConfig, 0, 2)
         hooks.afterComponent(testComponentConfig, 0, 2, 50L)
 
-        sink.events should have length 3
+        (sink.events should have).length(3)
         val event = sink.events.last.asInstanceOf[ComponentEndEvent]
         event.eventType shouldBe "component_end"
         event.componentName shouldBe "Component1"
@@ -127,9 +127,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.afterComponent(testComponentConfig, 0, 2, 50L)
         hooks.afterPipeline(testPipelineConfig, PipelineResult.Success(100L, 2))
 
-        sink.events.foreach { event =>
-          event.runId shouldBe "test-run-123"
-        }
+        sink.events.foreach(event => event.runId shouldBe "test-run-123")
       }
 
       it("should auto-generate runId if not provided") {
@@ -138,7 +136,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
 
         val event = sink.events.head
         event.runId should not be empty
-        event.runId should have length 36 // UUID format
+        (event.runId should have).length(36) // UUID format
       }
 
       it("should call sink.flush() after pipeline completion") {
@@ -159,7 +157,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.afterComponent(comp2, 1, 2, 75L)
         hooks.afterPipeline(testPipelineConfig, PipelineResult.Success(125L, 2))
 
-        sink.events should have length 6
+        (sink.events should have).length(6)
         sink.events.count(_.isInstanceOf[ComponentStartEvent]) shouldBe 2
         sink.events.count(_.isInstanceOf[ComponentEndEvent]) shouldBe 2
       }
@@ -170,7 +168,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.afterComponent(testComponentConfig, 0, 2, 50L)
 
         val eventIds = sink.events.map(_.eventId)
-        eventIds.distinct should have length eventIds.length
+        (eventIds.distinct should have).length(eventIds.length)
       }
     }
 
@@ -181,7 +179,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.beforeComponent(testComponentConfig, 0, 2)
         hooks.onComponentFailure(testComponentConfig, 0, new RuntimeException("Test error"))
 
-        sink.events should have length 3
+        (sink.events should have).length(3)
         val event = sink.events.last.asInstanceOf[ComponentFailureEvent]
         event.eventType shouldBe "component_failure"
         event.errorType shouldBe "RuntimeException"
@@ -277,14 +275,14 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.beforeComponent(testComponentConfig, 0, 2)
         hooks.afterComponent(testComponentConfig, 0, 2, 50L)
 
-        sink.events should have length 2
+        (sink.events should have).length(2)
       }
 
       it("should handle component failure without prior beforeComponent") {
         hooks.beforePipeline(testPipelineConfig)
         hooks.onComponentFailure(testComponentConfig, 0, new RuntimeException("Test"))
 
-        sink.events should have length 2
+        (sink.events should have).length(2)
         val event = sink.events.last.asInstanceOf[ComponentFailureEvent]
         event.durationMs should be >= 0L
       }
@@ -311,7 +309,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.beforeComponent(testPipelineConfig.pipelineComponents(1), 1, 2)
 
         val starts = sink.events.collect { case e: ComponentStartEvent => e }
-        starts should have length 2
+        (starts should have).length(2)
         starts(0).componentIndex shouldBe 1
         starts(1).componentIndex shouldBe 2
       }
@@ -344,9 +342,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
 
         val event = sink.events.head
         // Default filter only includes safe variables
-        event.systemContext.environment.keys.foreach { key =>
-          EnvFilter.DefaultAllowKeys should contain(key)
-        }
+        event.systemContext.environment.keys.foreach(key => EnvFilter.DefaultAllowKeys should contain(key))
       }
 
       it("should use custom env filter") {
@@ -364,7 +360,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
 
       it("should write events through provided sink") {
         hooks.beforePipeline(testPipelineConfig)
-        sink.events should have length 1
+        (sink.events should have).length(1)
       }
 
       it("should work with NoOp sink") {
@@ -405,7 +401,7 @@ class AuditHooksSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
         hooks.beforeComponent(specialConfig.pipelineComponents.head, 0, 1)
 
         // Should not throw and events should be written
-        sink.events should have length 2
+        (sink.events should have).length(2)
       }
     }
   }
