@@ -59,8 +59,8 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 // Run: sbt dependencyCheck
 // Fails build if CVSS score >= 7 (high/critical vulnerabilities)
 // NVD API key set via -Danalyzer.nist.nvd.api.key system property in CI
+// Suppression file configured via -Dsuppression system property in CI
 ThisBuild / dependencyCheckFailBuildOnCVSS := 7.0
-ThisBuild / dependencyCheckSuppressionFiles := Seq(file("dependency-check-suppressions.xml"))
 
 // Code coverage settings
 ThisBuild / coverageMinimumStmtTotal := 75
