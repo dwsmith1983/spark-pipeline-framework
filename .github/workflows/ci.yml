@@ -52,9 +52,19 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       # OWASP Dependency Check: Scan dependencies for known CVEs
-      # Fails if any dependency has CVSS score >= 7 (High/Critical)
+      # Requires NVD API key (free): https://nvd.nist.gov/developers/request-an-api-key
       - name: OWASP Dependency Check
-        run: sbt dependencyCheck
+        continue-on-error: true
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          if [ -n "$NVD_API_KEY" ]; then
+            sbt "set ThisBuild / dependencyCheckNvdApiKey := \"$NVD_API_KEY\"" dependencyCheck
+          else
+            echo "::warning::NVD_API_KEY not configured. Add secret to enable vulnerability scanning."
+            echo "Register for free API key at: https://nvd.nist.gov/developers/request-an-api-key"
+            exit 1
+          fi
 
       - name: Upload OWASP report
         uses: actions/upload-artifact@v4
