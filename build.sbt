@@ -58,8 +58,8 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 // OWASP Dependency Check - security vulnerability scanning
 // Run: sbt dependencyCheck
 // Fails build if CVSS score >= 7 (high/critical vulnerabilities)
-// NVD API key set via environment variable in CI
-dependencyCheckFailBuildOnCVSS := 7.0
+// NVD API key set via -Danalyzer.nist.nvd.api.key system property in CI
+ThisBuild / dependencyCheckFailBuildOnCVSS := 7.0
 
 // Code coverage settings
 ThisBuild / coverageMinimumStmtTotal := 75
@@ -269,7 +269,7 @@ lazy val example = (projectMatrix in file("example"))
     commonSettings,
     publish / skip := true,
     // Exclude demo files from coverage - runnable demos with main() don't need coverage
-    coverageExcludedFiles := ".*DemoPipeline.*;.*ValidationDemo.*;.*FailingComponent.*"
+    coverageExcludedFiles := ".*Demo.*Pipeline.*;.*Demo.*Hooks.*;.*ValidationDemo.*;.*FailingComponent.*"
   )
   .customRow(
     scalaVersions = Seq(scala212),
