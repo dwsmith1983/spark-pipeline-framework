@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+  <!-- ==========================================================================
+       FALSE POSITIVES - These CVEs do not apply to the matched dependencies
+       ========================================================================== -->
+
+  <!-- CVE-2018-17190: Apache Spark standalone mode auth bypass - fixed in Spark 2.4.0+
+       This CVE is from 2018 and was fixed years ago. OWASP incorrectly matches it
+       against current Spark versions based on CPE patterns. -->
+  <suppress>
+    <notes>False positive: CVE-2018-17190 was fixed in Spark 2.4.0 (2018).
+           We use Spark 3.5.x/4.0.x which are not affected.</notes>
+    <cve>CVE-2018-17190</cve>
+  </suppress>
+
+  <!-- jQuery CVEs in avro-ipc: Not exploitable in batch Spark context.
+       These are XSS vulnerabilities that require a web browser and user interaction.
+       Spark batch jobs do not serve web content to users. -->
+  <suppress>
+    <notes>Not exploitable: jQuery XSS vulnerabilities require web browser context.
+           Spark batch pipelines do not serve web content.</notes>
+    <packageUrl regex="true">^pkg:javascript/jquery@.*$</packageUrl>
+    <cve>CVE-2015-9251</cve>
+    <cve>CVE-2012-6708</cve>
+    <cve>CVE-2020-7656</cve>
+    <cve>CVE-2020-11023</cve>
+    <cve>CVE-2019-11358</cve>
+    <cve>CVE-2020-11022</cve>
+  </suppress>
+  <suppress>
+    <notes>Not exploitable: jQuery issues require web browser context.</notes>
+    <packageUrl regex="true">^pkg:javascript/jquery@.*$</packageUrl>
+    <vulnerabilityName>jquery issue: 162</vulnerabilityName>
+  </suppress>
+
+  <!-- CVE-2017-1000034: Akka actor deserialization - false positive match.
+       scala-parallel-collections is NOT Akka. OWASP incorrectly matches based on
+       version number similarity. -->
+  <suppress>
+    <notes>False positive: scala-parallel-collections is not Akka.
+           CVE-2017-1000034 is for Akka actor deserialization, not Scala collections.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.scala-lang\.modules/scala-parallel-collections.*$</packageUrl>
+    <cve>CVE-2017-1000034</cve>
+  </suppress>
+
+  <!-- CVE-2023-37475: Apache Avro Java SDK ReflectData SSRF - not exploitable.
+       Requires untrusted Avro schema input with ReflectData class instantiation.
+       This pipeline framework does not use ReflectData with untrusted schemas. -->
+  <suppress>
+    <notes>Not exploitable: Requires untrusted Avro schema with ReflectData.
+           Pipeline framework uses Parquet/ORC, not dynamic Avro schemas.</notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.avro/avro-(ipc|mapred)@.*$</packageUrl>
+    <cve>CVE-2023-37475</cve>
+  </suppress>
+
+</suppressions>

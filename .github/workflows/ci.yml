@@ -53,13 +53,16 @@ jobs:
 
       # OWASP Dependency Check: Scan dependencies for known CVEs
       # Requires NVD API key (free): https://nvd.nist.gov/developers/request-an-api-key
+      # Suppression file: dependency-check-suppressions.xml (false positives documented)
       - name: OWASP Dependency Check
         continue-on-error: true
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
           if [ -n "$NVD_API_KEY" ]; then
-            sbt -Danalyzer.nist.nvd.api.key="$NVD_API_KEY" dependencyCheck
+            sbt -Danalyzer.nist.nvd.api.key="$NVD_API_KEY" \
+                -DsuppressionFile=dependency-check-suppressions.xml \
+                dependencyCheck
           else
             echo "::warning::NVD_API_KEY not configured. Add secret to enable vulnerability scanning."
             echo "Register for free API key at: https://nvd.nist.gov/developers/request-an-api-key"
