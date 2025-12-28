@@ -38,7 +38,6 @@ ThisBuild / developers := List(
 
 // Maven Central (Sonatype) publishing via Central Portal
 import xerial.sbt.Sonatype.sonatypeCentralHost
-import net.nmoncho.sbt.dependencycheck.settings._
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 ThisBuild / publishTo := sonatypePublishToBundle.value
 
@@ -61,9 +60,8 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 // Fails build if CVSS score >= 7 (high/critical vulnerabilities)
 // NVD API key set via -Danalyzer.nist.nvd.api.key system property in CI
 ThisBuild / dependencyCheckFailBuildOnCVSS := 7.0
-ThisBuild / dependencyCheckSuppressions := SuppressionSettings(
-  files = SuppressionFilesSettings(None, None, None)(file("dependency-check-suppressions.xml"))()
-)
+// Note: Suppression file is loaded via suppressionFile property passed to OWASP engine
+// The SuppressionFilesSettings API doesn't work reliably with file() constructor
 
 // Code coverage settings
 ThisBuild / coverageMinimumStmtTotal := 75

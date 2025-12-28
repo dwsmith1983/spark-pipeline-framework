@@ -52,10 +52,13 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       # Cache NVD database to avoid 20+ minute downloads on each run
+      # Default location: ./data in working directory (OWASP default)
       - name: Cache OWASP NVD Database
         uses: actions/cache@v4
         with:
-          path: ~/.local/share/dependency-check
+          path: |
+            ./data
+            ~/.dependency-check
           key: owasp-nvd-${{ hashFiles('build.sbt') }}
           restore-keys: |
             owasp-nvd-
@@ -69,7 +72,9 @@ jobs:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
           if [ -n "$NVD_API_KEY" ]; then
-            sbt -Danalyzer.nist.nvd.api.key="$NVD_API_KEY" dependencyCheck
+            sbt -Danalyzer.nist.nvd.api.key="$NVD_API_KEY" \
+                -DsuppressionFiles="$GITHUB_WORKSPACE/dependency-check-suppressions.xml" \
+                dependencyCheck
           else
             echo "::warning::NVD_API_KEY not configured. Add secret to enable vulnerability scanning."
             echo "Register for free API key at: https://nvd.nist.gov/developers/request-an-api-key"
