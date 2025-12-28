@@ -49,3 +49,4 @@ website/build/
 website/.docusaurus/
 website/.cache-loader/
 website/static/api/
+.owasp-data/

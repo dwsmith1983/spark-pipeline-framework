@@ -73,6 +73,8 @@ ThisBuild / dependencyCheckSuppressions := {
     )
   )
 }
+// Store NVD database in a cacheable location (used by CI caching)
+ThisBuild / dependencyCheckDataDirectory := Some((ThisBuild / baseDirectory).value / ".owasp-data")
 
 // Code coverage settings
 ThisBuild / coverageMinimumStmtTotal := 75

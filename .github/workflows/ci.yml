@@ -54,14 +54,11 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       # Cache NVD database to avoid 20+ minute downloads on each run
-      # Default location: ./data in working directory (OWASP default)
       - name: Cache OWASP NVD Database
         uses: actions/cache@v4
         with:
-          path: |
-            ./data
-            ~/.dependency-check
-          key: owasp-nvd-${{ hashFiles('build.sbt') }}
+          path: .owasp-data
+          key: owasp-nvd-v1
           restore-keys: |
             owasp-nvd-
 
