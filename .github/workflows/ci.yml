@@ -55,9 +55,9 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      # Cache NVD database to avoid 20+ minute downloads on each run
-      - name: Cache OWASP NVD Database
-        uses: actions/cache@v4
+      # Restore NVD database from main branch cache
+      - name: Restore OWASP NVD Database
+        uses: actions/cache/restore@v4
         with:
           path: .owasp-data
           key: owasp-nvd-v1
@@ -89,6 +89,14 @@ jobs:
           name: owasp-report
           path: target/scala-*/dependency-check-report.html
           retention-days: 30
+
+      # Only save cache on main to avoid PR-level caches
+      - name: Save OWASP NVD Database
+        uses: actions/cache/save@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          path: .owasp-data
+          key: owasp-nvd-v1
 
   test-spark3:
     name: Test (Spark 3 / Scala 2.12)
