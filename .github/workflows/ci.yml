@@ -88,7 +88,7 @@ jobs:
         if: always()
         with:
           name: owasp-report
-          path: target/dependency-check-report.html
+          path: target/scala-*/dependency-check-report.html
           retention-days: 30
 
   test-spark3:
