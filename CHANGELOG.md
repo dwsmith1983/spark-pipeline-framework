@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.13](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.12...v0.1.13) (2025-12-28)
+
+
+### Features
+
+* add AuditHooks and enhance quality tooling ([#36](https://github.com/dwsmith1983/spark-pipeline-framework/issues/36)) ([0bb2551](https://github.com/dwsmith1983/spark-pipeline-framework/commit/0bb2551b1b23e6e5ebe34f2c9a29ec71befdbccd))
+
 ## [0.1.12](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.11...v0.1.12) (2025-12-25)
 
 

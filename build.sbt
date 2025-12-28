@@ -19,7 +19,7 @@ lazy val Spark4 = SparkAxis(spark40, "spark4")
 
 // Common settings
 ThisBuild / organization := "io.github.dwsmith1983"
-ThisBuild / version := "0.1.12" // x-release-please-version
+ThisBuild / version := "0.1.13" // x-release-please-version
 ThisBuild / javacOptions ++= Seq("-source", "17", "-target", "17")
 
 // Publishing configuration
