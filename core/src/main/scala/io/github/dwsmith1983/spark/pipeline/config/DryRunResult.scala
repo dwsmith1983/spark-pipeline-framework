@@ -99,8 +99,12 @@ object DryRunError {
     underlying: Throwable)
     extends DryRunError {
 
-    override def message: String =
-      s"Failed to instantiate component '${component.instanceName}' (${component.instanceType}): ${underlying.getMessage}"
+    override def message: String = {
+      val name = component.instanceName
+      val typ  = component.instanceType
+      val err  = underlying.getMessage
+      s"Failed to instantiate component '$name' ($typ): $err"
+    }
     override def cause: Option[Throwable] = Some(underlying)
   }
 }
