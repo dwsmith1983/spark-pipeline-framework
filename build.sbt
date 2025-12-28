@@ -57,12 +57,22 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 
 // OWASP Dependency Check - security vulnerability scanning
-// Run: sbt dependencyCheck
+// Run: sbt dependencyCheck or dependencyCheckAggregate (multi-module)
 // Fails build if CVSS score >= 7 (high/critical vulnerabilities)
 // NVD API key set via -Danalyzer.nist.nvd.api.key system property in CI
+import net.nmoncho.sbt.dependencycheck.settings._
 ThisBuild / dependencyCheckFailBuildOnCVSS := 7.0
-// Note: Suppression file is loaded via suppressionFile property passed to OWASP engine
-// The SuppressionFilesSettings API doesn't work reliably with file() constructor
+ThisBuild / dependencyCheckSuppressions := {
+  val suppressionFile = (ThisBuild / baseDirectory).value / "dependency-check-suppressions.xml"
+  SuppressionSettings(
+    files = SuppressionFilesSettings(
+      files = Seq(suppressionFile.getAbsolutePath),
+      user = None,
+      password = None,
+      bearerToken = None
+    )
+  )
+}
 
 // Code coverage settings
 ThisBuild / coverageMinimumStmtTotal := 75
