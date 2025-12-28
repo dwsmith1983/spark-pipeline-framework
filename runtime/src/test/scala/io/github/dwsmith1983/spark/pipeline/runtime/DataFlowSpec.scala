@@ -350,7 +350,6 @@ case class HeavyTransformConfig(rowCount: Int)
 class HeavyTransformComponent(conf: HeavyTransformConfig) extends DataFlow {
 
   override def run(): Unit = {
-    import spark.implicits._
     import org.apache.spark.sql.functions._
 
     val df = spark.range(conf.rowCount).toDF("id")

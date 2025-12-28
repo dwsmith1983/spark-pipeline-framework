@@ -44,8 +44,24 @@ ThisBuild / publishTo := sonatypePublishToBundle.value
 // Resolve dependency conflicts
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 
+// =============================================================================
+// Code Quality Tools Configuration
+// =============================================================================
+
 // Scalafmt - format on compile (optional, can be disabled)
 ThisBuild / scalafmtOnCompile := false
+
+// Scalafix - enable SemanticDB for semantic rules (RemoveUnused, etc.)
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+
+// OWASP Dependency Check - security vulnerability scanning
+// Run: sbt dependencyCheck
+// Fails build if CVSS score >= 7 (high/critical vulnerabilities)
+// NVD API key set via -Danalyzer.nist.nvd.api.key system property in CI
+ThisBuild / dependencyCheckFailBuildOnCVSS := 7.0
+// Note: Suppression file is loaded via suppressionFile property passed to OWASP engine
+// The SuppressionFilesSettings API doesn't work reliably with file() constructor
 
 // Code coverage settings
 ThisBuild / coverageMinimumStmtTotal := 75
@@ -255,7 +271,7 @@ lazy val example = (projectMatrix in file("example"))
     commonSettings,
     publish / skip := true,
     // Exclude demo files from coverage - runnable demos with main() don't need coverage
-    coverageExcludedFiles := ".*DemoPipeline.*;.*ValidationDemo.*;.*FailingComponent.*"
+    coverageExcludedFiles := ".*Demo.*Pipeline.*;.*Demo.*Hooks.*;.*ValidationDemo.*;.*FailingComponent.*"
   )
   .customRow(
     scalaVersions = Seq(scala212),

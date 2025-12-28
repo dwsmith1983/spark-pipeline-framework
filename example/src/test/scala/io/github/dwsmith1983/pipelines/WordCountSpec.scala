@@ -9,8 +9,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 
-import org.apache.spark.sql.DataFrame
-
 import java.nio.file.{Files, Path}
 
 /** Comprehensive tests for WordCount component. */
