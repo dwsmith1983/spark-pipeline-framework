@@ -100,16 +100,17 @@ class LoggingHooks(
     }
 
     if (useStructuredFormat) {
-      logger.info(
-        s"""{"event":"pipeline_end","run_id":"$runId","pipeline_name":"${escapeJson(
-            config.pipelineName
-          )}","duration_ms":$durationMs,"status":"$status","components_completed":$componentsCompleted,"timestamp":"$timestamp"}"""
-      )
+      val name = escapeJson(config.pipelineName)
+      val json = s"""{"event":"pipeline_end","run_id":"$runId",""" +
+        s""""pipeline_name":"$name","duration_ms":$durationMs,""" +
+        s""""status":"$status","components_completed":$componentsCompleted,""" +
+        s""""timestamp":"$timestamp"}"""
+      logger.info(json)
     } else {
       val statusText = if (status == "success") "completed" else "failed"
-      logger.info(
-        s"Pipeline '${config.pipelineName}' $statusText in ${durationMs}ms (run_id=$runId, completed=$componentsCompleted)"
-      )
+      val msg = s"Pipeline '${config.pipelineName}' $statusText in ${durationMs}ms " +
+        s"(run_id=$runId, completed=$componentsCompleted)"
+      logger.info(msg)
     }
   }
 
@@ -118,13 +119,13 @@ class LoggingHooks(
     val componentNumber = index + 1
 
     if (useStructuredFormat) {
-      logger.info(
-        s"""{"event":"component_start","run_id":"$runId","component_name":"${escapeJson(
-            config.instanceName
-          )}","component_type":"${escapeJson(
-            config.instanceType
-          )}","component_index":$componentNumber,"total_components":$total,"timestamp":"$timestamp"}"""
-      )
+      val name = escapeJson(config.instanceName)
+      val typ  = escapeJson(config.instanceType)
+      val json = s"""{"event":"component_start","run_id":"$runId",""" +
+        s""""component_name":"$name","component_type":"$typ",""" +
+        s""""component_index":$componentNumber,"total_components":$total,""" +
+        s""""timestamp":"$timestamp"}"""
+      logger.info(json)
     } else {
       logger.info(s"[$componentNumber/$total] Starting '${config.instanceName}'")
     }
@@ -140,13 +141,15 @@ class LoggingHooks(
     val componentNumber = index + 1
 
     if (useStructuredFormat) {
-      logger.info(
-        s"""{"event":"component_end","run_id":"$runId","component_name":"${escapeJson(
-            config.instanceName
-          )}","component_index":$componentNumber,"total_components":$total,"duration_ms":$durationMs,"status":"success","timestamp":"$timestamp"}"""
-      )
+      val name = escapeJson(config.instanceName)
+      val json = s"""{"event":"component_end","run_id":"$runId",""" +
+        s""""component_name":"$name","component_index":$componentNumber,""" +
+        s""""total_components":$total,"duration_ms":$durationMs,""" +
+        s""""status":"success","timestamp":"$timestamp"}"""
+      logger.info(json)
     } else {
-      logger.info(s"[$componentNumber/$total] Completed '${config.instanceName}' in ${durationMs}ms")
+      val msg = s"[$componentNumber/$total] Completed '${config.instanceName}' in ${durationMs}ms"
+      logger.info(msg)
     }
   }
 
@@ -161,17 +164,17 @@ class LoggingHooks(
     componentStartTimes.remove(index)
 
     if (useStructuredFormat) {
-      logger.error(
-        s"""{"event":"component_error","run_id":"$runId","component_name":"${escapeJson(
-            config.instanceName
-          )}","component_index":$componentNumber,"duration_ms":$durationMs,"error_type":"$errorType","error_message":"${escapeJson(
-            errorMessage
-          )}","timestamp":"$timestamp"}"""
-      )
+      val name   = escapeJson(config.instanceName)
+      val errMsg = escapeJson(errorMessage)
+      val json = s"""{"event":"component_error","run_id":"$runId",""" +
+        s""""component_name":"$name","component_index":$componentNumber,""" +
+        s""""duration_ms":$durationMs,"error_type":"$errorType",""" +
+        s""""error_message":"$errMsg","timestamp":"$timestamp"}"""
+      logger.error(json)
     } else {
-      logger.error(
-        s"[$componentNumber] Component '${config.instanceName}' failed after ${durationMs}ms: $errorType - $errorMessage"
-      )
+      val msg = s"[$componentNumber] Component '${config.instanceName}' failed " +
+        s"after ${durationMs}ms: $errorType - $errorMessage"
+      logger.error(msg)
     }
   }
 }

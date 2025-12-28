@@ -26,46 +26,13 @@ object ComponentInstantiator {
    */
   def instantiate[T](componentConfig: ComponentConfig): T = {
     val className: String = componentConfig.instanceType
-
     try {
-      // First verify the main class exists
-      try {
-        Class.forName(className)
-      } catch {
-        case _: ClassNotFoundException =>
-          throw new ComponentInstantiationException(
-            s"Could not find class: $className. Ensure the class is on the classpath."
-          )
-      }
-
-      // Load the companion object (Scala appends $ to companion object class names)
-      val companionClass: Class[_] =
-        try {
-          Class.forName(className + "$")
-        } catch {
-          case _: ClassNotFoundException =>
-            throw new ComponentInstantiationException(
-              s"Could not find companion object for: $className. " +
-                "Ensure it has a companion object extending ConfigurableInstance."
-            )
-        }
-
-      val companion: AnyRef = companionClass.getField("MODULE$").get(null)
-
-      // Verify it implements ConfigurableInstance
-      companion match {
-        case configurable: ConfigurableInstance =>
-          configurable.createFromConfig(componentConfig.instanceConfig).asInstanceOf[T]
-        case _ =>
-          throw new ComponentInstantiationException(
-            s"Companion object of $className does not extend ConfigurableInstance"
-          )
-      }
+      verifyClassExists(className)
+      val companion = loadCompanionObject(className)
+      createComponent[T](companion, componentConfig, className)
     } catch {
-      case e: ComponentInstantiationException =>
-        throw e
-      case e: ConfigurationException =>
-        throw e
+      case e: ComponentInstantiationException => throw e
+      case e: ConfigurationException          => throw e
       case e: pureconfig.error.ConfigReaderException[_] =>
         throw ConfigurationException.fromConfigReaderException(e)
       case e: NoSuchFieldException =>
@@ -81,6 +48,44 @@ object ComponentInstantiator {
         )
     }
   }
+
+  private def verifyClassExists(className: String): Unit =
+    try {
+      val _ = Class.forName(className)
+    } catch {
+      case _: ClassNotFoundException =>
+        throw new ComponentInstantiationException(
+          s"Could not find class: $className. Ensure the class is on the classpath."
+        )
+    }
+
+  private def loadCompanionObject(className: String): AnyRef = {
+    val companionClass: Class[_] =
+      try {
+        Class.forName(className + "$")
+      } catch {
+        case _: ClassNotFoundException =>
+          throw new ComponentInstantiationException(
+            s"Could not find companion object for: $className. " +
+              "Ensure it has a companion object extending ConfigurableInstance."
+          )
+      }
+    companionClass.getField("MODULE$").get(null)
+  }
+
+  private def createComponent[T](
+    companion: AnyRef,
+    config: ComponentConfig,
+    className: String
+  ): T =
+    companion match {
+      case configurable: ConfigurableInstance =>
+        configurable.createFromConfig(config.instanceConfig).asInstanceOf[T]
+      case _ =>
+        throw new ComponentInstantiationException(
+          s"Companion object of $className does not extend ConfigurableInstance"
+        )
+    }
 
   /**
    * Attempts to instantiate a component, returning a Try.

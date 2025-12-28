@@ -10,6 +10,7 @@ lazy val spark40 = "4.0.1"
 lazy val typesafeConfigVersion = "1.4.3"
 lazy val pureConfigVersion = "0.17.4"
 lazy val scalatestVersion = "3.2.17"
+lazy val scalacheckVersion = "1.17.0"
 lazy val log4jVersion = "2.23.1"
 lazy val micrometerVersion = "1.12.2"
 
@@ -157,7 +158,9 @@ lazy val commonSettings = Seq(
   Compile / console / scalacOptions --= Seq("-Xfatal-warnings"),
   Test / scalacOptions --= Seq("-Xfatal-warnings"),
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % scalatestVersion % Test
+    "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
+    "org.scalatestplus" %% "scalacheck-1-17" % "3.2.17.0" % Test
   ),
   // Scalastyle configuration - use root directory for config file
   (Compile / scalastyleConfig) := (ThisBuild / baseDirectory).value / "scalastyle-config.xml",
