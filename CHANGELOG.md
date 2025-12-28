@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.0](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.13...v1.0.0) (2025-12-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* first stable release establishing API stability
+* first stable release establishing API stability
+
+### Features
+
+* add production deployment and scope documentation ([#42](https://github.com/dwsmith1983/spark-pipeline-framework/issues/42)) ([d89375d](https://github.com/dwsmith1983/spark-pipeline-framework/commit/d89375d691598881c9a8a2fe73e7d923d6b99053))
+* add production deployment and scope documentation ([#46](https://github.com/dwsmith1983/spark-pipeline-framework/issues/46)) ([b398b87](https://github.com/dwsmith1983/spark-pipeline-framework/commit/b398b873dbe0e96d56a1a381c180512c68e35a96))
+
 ## [0.1.13](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.12...v0.1.13) (2025-12-28)
 
 
