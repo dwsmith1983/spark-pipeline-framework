@@ -353,6 +353,18 @@ sbt scalafixAll
 sbt dependencyCheck
 ```
 
+## Roadmap
+
+Track progress on [GitHub Milestones](https://github.com/dwsmith1983/spark-pipeline-framework/milestones).
+
+| Version | Focus | Key Features |
+|---------|-------|--------------|
+| **v1.1.0** | Operational Improvements | Schema contracts ([#49](https://github.com/dwsmith1983/spark-pipeline-framework/issues/49)), Configuration validation ([#54](https://github.com/dwsmith1983/spark-pipeline-framework/issues/54)) |
+| **v1.2.0** | Resilience | Checkpointing ([#50](https://github.com/dwsmith1983/spark-pipeline-framework/issues/50)), Retry logic ([#55](https://github.com/dwsmith1983/spark-pipeline-framework/issues/55)), Data quality hooks ([#56](https://github.com/dwsmith1983/spark-pipeline-framework/issues/56)) |
+| **v2.0.0** | Parallelism | DAG-based component execution ([#51](https://github.com/dwsmith1983/spark-pipeline-framework/issues/51)) |
+| **v2.1.0** | Streaming | Structured Streaming support ([#52](https://github.com/dwsmith1983/spark-pipeline-framework/issues/52)) |
+| **v2.2.0** | Cloud Native | Secrets management ([#57](https://github.com/dwsmith1983/spark-pipeline-framework/issues/57)), Spark Connect ([#58](https://github.com/dwsmith1983/spark-pipeline-framework/issues/58)) |
+
 ## License
 
 Apache 2.0
