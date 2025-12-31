@@ -62,10 +62,9 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: '/spark-pipeline-framework/api/index.html',
+          href: 'pathname:///spark-pipeline-framework/api/index.html',
           label: 'API',
           position: 'left',
-          target: '_self',
         },
         {
           href: 'https://github.com/dwsmith1983/spark-pipeline-framework',
@@ -95,8 +94,7 @@ const config: Config = {
             },
             {
               label: 'API Reference',
-              href: '/spark-pipeline-framework/api/index.html',
-              target: '_self',
+              href: 'pathname:///spark-pipeline-framework/api/index.html',
             },
           ],
         },
