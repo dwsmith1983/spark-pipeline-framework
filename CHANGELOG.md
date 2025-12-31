@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.0.0...v1.0.1) (2025-12-31)
+
+
+### Bug Fixes
+
+* use pathname:// protocol for ScalaDoc links ([#64](https://github.com/dwsmith1983/spark-pipeline-framework/issues/64)) ([7d9932b](https://github.com/dwsmith1983/spark-pipeline-framework/commit/7d9932b2741b2cc07f5dd6de6eb0d11ae3497225))
+
 ## [1.0.0](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v0.1.13...v1.0.0) (2025-12-28)
 
 
