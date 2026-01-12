@@ -11,6 +11,7 @@ const sidebars: SidebarsConfig = {
     'checkpointing',
     'components',
     'hooks',
+    'retry',
     'data-quality',
     'streaming',
     'deployment',

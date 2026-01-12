@@ -135,6 +135,54 @@ class MetricsHooks(
 
     meterRegistry.counter(s"$metricsPrefix.runs", tags).increment()
   }
+
+  override def onRetryAttempt(
+    config: ComponentConfig,
+    attempt: Int,
+    maxAttempts: Int,
+    delayMs: Long,
+    error: Throwable
+  ): Unit = {
+    locally { val _ = (maxAttempts, delayMs) }
+    val pipelineName: String = Option(currentPipelineConfig).map(_.pipelineName).getOrElse("unknown")
+    val errorType: String    = error.getClass.getSimpleName
+
+    val tags: Tags = Tags.of(
+      "pipeline_name",
+      pipelineName,
+      "component_name",
+      config.instanceName,
+      "error_type",
+      errorType
+    ).and(commonTags)
+
+    meterRegistry.counter(s"$metricsPrefix.component.retries", tags).increment()
+
+    // Track retry attempt number distribution
+    val attemptTags: Tags = tags.and("attempt", attempt.toString)
+    meterRegistry.counter(s"$metricsPrefix.component.retry_attempts", attemptTags).increment()
+  }
+
+  override def onCircuitBreakerStateChange(
+    componentName: String,
+    oldState: CircuitState,
+    newState: CircuitState
+  ): Unit = {
+    locally { val _ = oldState }
+    val pipelineName: String = Option(currentPipelineConfig).map(_.pipelineName).getOrElse("unknown")
+
+    val tags: Tags = Tags.of(
+      "pipeline_name",
+      pipelineName,
+      "component_name",
+      componentName,
+      "state",
+      newState.name
+    ).and(commonTags)
+
+    // Track circuit breaker state transitions via counter
+    meterRegistry.counter(s"$metricsPrefix.circuit_breaker.transitions", tags).increment()
+  }
 }
 
 /** Factory methods for creating MetricsHooks instances. */

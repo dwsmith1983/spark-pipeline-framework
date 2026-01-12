@@ -177,6 +177,48 @@ class LoggingHooks(
       logger.error(msg)
     }
   }
+
+  override def onRetryAttempt(
+    config: ComponentConfig,
+    attempt: Int,
+    maxAttempts: Int,
+    delayMs: Long,
+    error: Throwable
+  ): Unit = {
+    val errorType    = error.getClass.getSimpleName
+    val errorMessage = Option(error.getMessage).getOrElse("No message")
+
+    if (useStructuredFormat) {
+      val name   = escapeJson(config.instanceName)
+      val errMsg = escapeJson(errorMessage)
+      val json = s"""{"event":"component_retry","run_id":"$runId",""" +
+        s""""component_name":"$name","attempt":$attempt,""" +
+        s""""max_attempts":$maxAttempts,"delay_ms":$delayMs,""" +
+        s""""error_type":"$errorType","error_message":"$errMsg",""" +
+        s""""timestamp":"$timestamp"}"""
+      logger.warn(json)
+    } else {
+      val msg = s"Retry attempt $attempt/$maxAttempts for '${config.instanceName}' " +
+        s"after $errorType: $errorMessage. Waiting ${delayMs}ms..."
+      logger.warn(msg)
+    }
+  }
+
+  override def onCircuitBreakerStateChange(
+    componentName: String,
+    oldState: CircuitState,
+    newState: CircuitState
+  ): Unit =
+    if (useStructuredFormat) {
+      val name = escapeJson(componentName)
+      val json = s"""{"event":"circuit_breaker_state_change","run_id":"$runId",""" +
+        s""""component_name":"$name","old_state":"${oldState.name}",""" +
+        s""""new_state":"${newState.name}","timestamp":"$timestamp"}"""
+      logger.info(json)
+    } else {
+      val msg = s"Circuit breaker for '$componentName' changed: ${oldState.name} -> ${newState.name}"
+      logger.info(msg)
+    }
 }
 
 object LoggingHooks {
