@@ -5,9 +5,13 @@ const sidebars: SidebarsConfig = {
     'getting-started',
     'scope',
     'configuration',
+    'config-validation',
+    'secrets-management',
     'components',
     'hooks',
+    'streaming',
     'deployment',
+    'contributing',
   ],
 };
 
