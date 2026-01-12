@@ -68,9 +68,9 @@ class DataQualityConfigSpec extends AnyFunSpec with Matchers {
 
       it("should support exhaustive pattern matching") {
         def describe(timing: CheckTiming): String = timing match {
-          case CheckTiming.BeforePipeline          => "before"
-          case CheckTiming.AfterPipeline           => "after"
-          case CheckTiming.AfterComponent(name)    => s"after:$name"
+          case CheckTiming.BeforePipeline       => "before"
+          case CheckTiming.AfterPipeline        => "after"
+          case CheckTiming.AfterComponent(name) => s"after:$name"
         }
 
         describe(CheckTiming.BeforePipeline) shouldBe "before"

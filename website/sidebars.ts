@@ -8,6 +8,7 @@ const sidebars: SidebarsConfig = {
     'config-validation',
     'secrets-management',
     'schema-contracts',
+    'checkpointing',
     'components',
     'hooks',
     'data-quality',

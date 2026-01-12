@@ -7,9 +7,7 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterAll
 
-/**
- * Tests for SparkSchemaConverter.
- */
+/** Tests for SparkSchemaConverter. */
 class SparkSchemaConverterSpec extends AnyFunSpec with Matchers with BeforeAndAfterAll {
 
   var spark: SparkSession = _
@@ -153,7 +151,7 @@ class SparkSchemaConverterSpec extends AnyFunSpec with Matchers with BeforeAndAf
     describe("toStructField") {
 
       it("should convert a nullable field") {
-        val field = SchemaField("name", "string", nullable = true)
+        val field       = SchemaField("name", "string", nullable = true)
         val structField = SparkSchemaConverter.toStructField(field)
 
         structField.name shouldBe "name"
@@ -162,7 +160,7 @@ class SparkSchemaConverterSpec extends AnyFunSpec with Matchers with BeforeAndAf
       }
 
       it("should convert a non-nullable field") {
-        val field = SchemaField("id", "integer", nullable = false)
+        val field       = SchemaField("id", "integer", nullable = false)
         val structField = SparkSchemaConverter.toStructField(field)
 
         structField.name shouldBe "id"
@@ -171,7 +169,7 @@ class SparkSchemaConverterSpec extends AnyFunSpec with Matchers with BeforeAndAf
       }
 
       it("should include metadata") {
-        val field = SchemaField("amount", "decimal", metadata = Map("precision" -> "10"))
+        val field       = SchemaField("amount", "decimal", metadata = Map("precision" -> "10"))
         val structField = SparkSchemaConverter.toStructField(field)
 
         structField.metadata.getString("precision") shouldBe "10"
@@ -216,7 +214,7 @@ class SparkSchemaConverterSpec extends AnyFunSpec with Matchers with BeforeAndAf
       }
 
       it("should handle empty schema") {
-        val schema = SchemaDefinition.empty
+        val schema     = SchemaDefinition.empty
         val structType = SparkSchemaConverter.toStructType(schema)
 
         structType.fields shouldBe empty
@@ -242,7 +240,7 @@ class SparkSchemaConverterSpec extends AnyFunSpec with Matchers with BeforeAndAf
 
       it("should include description if provided") {
         val structType = StructType(Seq(StructField("id", LongType)))
-        val schema = SparkSchemaConverter.fromStructType(structType, Some("User table"))
+        val schema     = SparkSchemaConverter.fromStructType(structType, Some("User table"))
 
         schema.description shouldBe Some("User table")
       }
@@ -384,8 +382,8 @@ class SparkSchemaConverterSpec extends AnyFunSpec with Matchers with BeforeAndAf
 
       it("should collect multiple errors") {
         val expected = SchemaDefinition(Seq(
-          SchemaField("id", "string"),  // Wrong type
-          SchemaField("missing", "long")  // Missing
+          SchemaField("id", "string"),   // Wrong type
+          SchemaField("missing", "long") // Missing
         ))
         val actual = StructType(Seq(
           StructField("id", LongType)
@@ -408,12 +406,13 @@ class SparkSchemaConverterSpec extends AnyFunSpec with Matchers with BeforeAndAf
         ))
 
         val structType = SparkSchemaConverter.toStructType(original)
-        val roundTrip = SparkSchemaConverter.fromStructType(structType)
+        val roundTrip  = SparkSchemaConverter.fromStructType(structType)
 
         roundTrip.fieldNames shouldBe original.fieldNames
-        roundTrip.fields.zip(original.fields).foreach { case (rt, orig) =>
-          rt.name shouldBe orig.name
-          rt.nullable shouldBe orig.nullable
+        roundTrip.fields.zip(original.fields).foreach {
+          case (rt, orig) =>
+            rt.name shouldBe orig.name
+            rt.nullable shouldBe orig.nullable
         }
       }
     }

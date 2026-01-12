@@ -37,13 +37,12 @@ class DataQualityHooksSpec
   override def afterAll(): Unit =
     SparkSessionWrapper.stop()
 
-  override def afterEach(): Unit = {
+  override def afterEach(): Unit =
     spark.catalog.listTables().collect().foreach { t =>
       if (t.isTemporary) {
         spark.catalog.dropTempView(t.name)
       }
     }
-  }
 
   // Helper to create test DataFrames
   private def createIntDf(name: String, data: Seq[Int]): Unit = {

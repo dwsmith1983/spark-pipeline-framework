@@ -35,13 +35,12 @@ class DataQualityCheckSpec
   override def afterAll(): Unit =
     SparkSessionWrapper.stop()
 
-  override def afterEach(): Unit = {
+  override def afterEach(): Unit =
     spark.catalog.listTables().collect().foreach { t =>
       if (t.isTemporary) {
         spark.catalog.dropTempView(t.name)
       }
     }
-  }
 
   // Helper to create DataFrames without spark.implicits
   private def createIntDf(name: String, data: Seq[Int]): Unit = {
@@ -142,13 +141,16 @@ class DataQualityCheckSpec
     }
 
     it("should fail when null percentage exceeds threshold") {
-      createNullableTwoColDf("nulls_table", Seq(
-        (Some("a"), 1),
-        (None, 2),
-        (Some("c"), 3),
-        (None, 4),
-        (Some("e"), 5)
-      ))
+      createNullableTwoColDf(
+        "nulls_table",
+        Seq(
+          (Some("a"), 1),
+          (None, 2),
+          (Some("c"), 3),
+          (None, 4),
+          (Some("e"), 5)
+        )
+      )
 
       val check  = NullCheck("nulls_table", Seq("name"), maxNullPercent = 10.0)
       val result = check.run(spark)
@@ -158,13 +160,16 @@ class DataQualityCheckSpec
     }
 
     it("should pass when null percentage within threshold") {
-      createNullableTwoColDf("some_nulls_table", Seq(
-        (Some("a"), 1),
-        (None, 2),
-        (Some("c"), 3),
-        (Some("d"), 4),
-        (Some("e"), 5)
-      ))
+      createNullableTwoColDf(
+        "some_nulls_table",
+        Seq(
+          (Some("a"), 1),
+          (None, 2),
+          (Some("c"), 3),
+          (Some("d"), 4),
+          (Some("e"), 5)
+        )
+      )
 
       val check  = NullCheck("some_nulls_table", Seq("name"), maxNullPercent = 25.0)
       val result = check.run(spark)

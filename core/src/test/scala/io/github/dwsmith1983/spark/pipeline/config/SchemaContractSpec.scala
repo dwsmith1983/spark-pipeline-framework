@@ -6,9 +6,7 @@ import org.scalatest.matchers.should.Matchers
 import pureconfig._
 import pureconfig.generic.auto._
 
-/**
- * Tests for schema contract functionality.
- */
+/** Tests for schema contract functionality. */
 class SchemaContractSpec extends AnyFunSpec with Matchers {
 
   describe("SchemaField") {
@@ -287,12 +285,12 @@ class SchemaContractSpec extends AnyFunSpec with Matchers {
 
       it("should collect multiple errors") {
         val output = SchemaDefinition(Seq(
-          SchemaField("id", "integer")  // Wrong type
+          SchemaField("id", "integer") // Wrong type
         ))
         val input = SchemaDefinition(Seq(
           SchemaField("id", "string"),
-          SchemaField("name", "string"),  // Missing
-          SchemaField("age", "integer")   // Missing
+          SchemaField("name", "string"), // Missing
+          SchemaField("age", "integer")  // Missing
         ))
 
         val result = SchemaValidator.validate(output, input)

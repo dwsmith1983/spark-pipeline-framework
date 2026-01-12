@@ -198,7 +198,7 @@ object SparkSchemaConverter {
    * @return List of validation error messages (empty if valid)
    */
   def validateAgainst(expected: SchemaDefinition, actual: StructType): List[String] = {
-    val errors = scala.collection.mutable.ListBuffer.empty[String]
+    val errors       = scala.collection.mutable.ListBuffer.empty[String]
     val actualFields = actual.fields.map(f => f.name -> f).toMap
 
     expected.fields.foreach { expectedField =>

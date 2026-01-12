@@ -170,29 +170,33 @@ object DataQualityResultSerializer {
 
     case DataQualityResult.Failed(checkName, tableName, message, details, timestamp) =>
       s"""{"status":"failed","check_name":"$checkName","table_name":"$tableName","message":"${escapeJson(
-          message)}","timestamp":"${timestampFormatter.format(timestamp)}","details":${mapToJson(details)}}"""
+          message
+        )}","timestamp":"${timestampFormatter.format(timestamp)}","details":${mapToJson(details)}}"""
 
     case DataQualityResult.Warning(checkName, tableName, message, details, timestamp) =>
       s"""{"status":"warning","check_name":"$checkName","table_name":"$tableName","message":"${escapeJson(
-          message)}","timestamp":"${timestampFormatter.format(timestamp)}","details":${mapToJson(details)}}"""
+          message
+        )}","timestamp":"${timestampFormatter.format(timestamp)}","details":${mapToJson(details)}}"""
 
     case DataQualityResult.Skipped(checkName, tableName, reason, timestamp) =>
       s"""{"status":"skipped","check_name":"$checkName","table_name":"$tableName","reason":"${escapeJson(
-          reason)}","timestamp":"${timestampFormatter.format(timestamp)}"}"""
+          reason
+        )}","timestamp":"${timestampFormatter.format(timestamp)}"}"""
   }
 
   private def mapToJson(map: Map[String, Any]): String =
     if (map.isEmpty) "{}"
     else {
-      val entries = map.map { case (k, v) =>
-        val valueJson = v match {
-          case s: String  => s""""${escapeJson(s)}""""
-          case n: Number  => n.toString
-          case b: Boolean => b.toString
-          case null       => "null"
-          case other      => s""""${escapeJson(other.toString)}""""
-        }
-        s""""$k":$valueJson"""
+      val entries = map.map {
+        case (k, v) =>
+          val valueJson = v match {
+            case s: String  => s""""${escapeJson(s)}""""
+            case n: Number  => n.toString
+            case b: Boolean => b.toString
+            case null       => "null"
+            case other      => s""""${escapeJson(other.toString)}""""
+          }
+          s""""$k":$valueJson"""
       }
       s"{${entries.mkString(",")}}"
     }

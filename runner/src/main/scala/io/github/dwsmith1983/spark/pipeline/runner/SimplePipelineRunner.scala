@@ -1,5 +1,6 @@
 package io.github.dwsmith1983.spark.pipeline.runner
 
+import io.github.dwsmith1983.spark.pipeline.checkpoint._
 import io.github.dwsmith1983.spark.pipeline.config._
 import io.github.dwsmith1983.spark.pipeline.runtime.SparkSessionWrapper
 import com.typesafe.config.{Config, ConfigFactory}
@@ -534,6 +535,310 @@ object SimplePipelineRunner extends PipelineRunner {
         }
 
         throw new SchemaContractViolationException(producerName, consumerName, errors, warnings)
+    }
+  }
+
+  // ============================================================================
+  // Checkpoint and Resume Support
+  // ============================================================================
+
+  /**
+   * Resumes a failed pipeline run from its checkpoint.
+   *
+   * Loads the checkpoint state for the specified run ID and continues
+   * execution from the next component after the last successful one.
+   *
+   * == Example ==
+   *
+   * {{{
+   * // Resume from a specific failed run
+   * SimplePipelineRunner.resume(
+   *   configPath = "/path/to/pipeline.conf",
+   *   runId = "abc123-def456"
+   * )
+   * }}}
+   *
+   * @param configPath Path to the HOCON configuration file
+   * @param runId The run ID to resume from
+   * @param store Optional checkpoint store (uses config-based store if not provided)
+   * @param additionalHooks Additional hooks to compose with checkpoint hooks
+   * @note Throws `CheckpointException` if checkpoint not found or config mismatch
+   */
+  def resume(
+    configPath: String,
+    runId: String,
+    store: Option[CheckpointStore] = None,
+    additionalHooks: PipelineHooks = PipelineHooks.NoOp
+  ): Unit = {
+    val config: Config = ConfigFactory.parseFile(new java.io.File(configPath)).resolve()
+    resumeFromConfig(config, runId, store, additionalHooks)
+  }
+
+  /**
+   * Resumes a failed pipeline run using a Config object.
+   *
+   * @param config The loaded HOCON configuration
+   * @param runId The run ID to resume from
+   * @param store Optional checkpoint store
+   * @param additionalHooks Additional hooks to compose with checkpoint hooks
+   */
+  def resumeFromConfig(
+    config: Config,
+    runId: String,
+    store: Option[CheckpointStore] = None,
+    additionalHooks: PipelineHooks = PipelineHooks.NoOp
+  ): Unit = {
+    // Load pipeline configuration
+    val pipelineConfig: PipelineConfig =
+      ConfigSource.fromConfig(config.getConfig("pipeline")).loadOrThrow[PipelineConfig]
+
+    // Get checkpoint store from config or parameter
+    val checkpointStore: CheckpointStore = store.getOrElse {
+      pipelineConfig.checkpoint
+        .filter(_.enabled)
+        .map(_.createStore())
+        .getOrElse(throw new CheckpointException(
+          "Cannot resume: no checkpoint store provided and checkpointing not enabled in config"
+        ))
+    }
+
+    // Load the checkpoint
+    val checkpoint: CheckpointState = checkpointStore.loadByRunId(runId).getOrElse {
+      throw new CheckpointException(s"Checkpoint not found for run: $runId")
+    }
+
+    // Validate configuration matches
+    if (checkpoint.totalComponents != pipelineConfig.pipelineComponents.size) {
+      throw CheckpointException.configMismatch(
+        checkpoint.totalComponents,
+        pipelineConfig.pipelineComponents.size
+      )
+    }
+
+    val startIndex: Int = checkpoint.resumeFromIndex
+    logger.info(s"Resuming pipeline from component ${startIndex + 1}/${checkpoint.totalComponents}")
+    logger.info(s"Original run: $runId, ${checkpoint.completedComponents.size} components already completed")
+
+    // Create checkpoint hooks for the resumed run
+    val checkpointHooks: CheckpointHooks = CheckpointHooks.forResume(checkpointStore, runId)
+
+    // Combine with additional hooks
+    val combinedHooks: PipelineHooks = PipelineHooks.compose(checkpointHooks, additionalHooks)
+
+    // Run from the resume index
+    runFromIndex(config, combinedHooks, startIndex)
+  }
+
+  /**
+   * Runs a pipeline with automatic checkpoint support.
+   *
+   * If checkpointing is enabled in the configuration and auto-resume is true,
+   * this method will automatically resume from the last failed checkpoint if one exists.
+   *
+   * == Example ==
+   *
+   * {{{
+   * // Run with checkpointing enabled (configured in pipeline.conf)
+   * SimplePipelineRunner.runWithCheckpointing("/path/to/pipeline.conf")
+   * }}}
+   *
+   * @param configPath Path to the HOCON configuration file
+   * @param additionalHooks Additional hooks to compose with checkpoint hooks
+   */
+  def runWithCheckpointing(
+    configPath: String,
+    additionalHooks: PipelineHooks = PipelineHooks.NoOp
+  ): Unit = {
+    val config: Config = ConfigFactory.parseFile(new java.io.File(configPath)).resolve()
+    runWithCheckpointingFromConfig(config, additionalHooks)
+  }
+
+  /**
+   * Runs a pipeline with automatic checkpoint support using a Config object.
+   *
+   * @param config The loaded HOCON configuration
+   * @param additionalHooks Additional hooks to compose with checkpoint hooks
+   */
+  def runWithCheckpointingFromConfig(
+    config: Config,
+    additionalHooks: PipelineHooks = PipelineHooks.NoOp
+  ): Unit = {
+    val pipelineConfig: PipelineConfig =
+      ConfigSource.fromConfig(config.getConfig("pipeline")).loadOrThrow[PipelineConfig]
+
+    val checkpointConfig: Option[CheckpointConfig] = pipelineConfig.checkpoint.filter(_.enabled)
+
+    checkpointConfig match {
+      case Some(cpConfig) if cpConfig.autoResume =>
+        // Check for existing checkpoint to resume
+        val store: CheckpointStore = cpConfig.createStore()
+        store.loadLatest(pipelineConfig.pipelineName) match {
+          case Some(checkpoint) if checkpoint.canResume =>
+            logger.info(s"Auto-resuming from checkpoint: ${checkpoint.runId}")
+            resumeFromConfig(config, checkpoint.runId, Some(store), additionalHooks)
+          case _ =>
+            // No checkpoint to resume, run fresh with checkpointing
+            runFreshWithCheckpointing(config, cpConfig, additionalHooks)
+        }
+
+      case Some(cpConfig) =>
+        // Checkpointing enabled but not auto-resume
+        runFreshWithCheckpointing(config, cpConfig, additionalHooks)
+
+      case None =>
+        // No checkpointing configured, run normally
+        run(config, additionalHooks)
+    }
+  }
+
+  /**
+   * Lists all incomplete (resumable) checkpoints for a pipeline.
+   *
+   * @param pipelineName Name of the pipeline
+   * @param store The checkpoint store to query
+   * @return List of checkpoint states that can be resumed
+   */
+  def listResumableCheckpoints(
+    pipelineName: String,
+    store: CheckpointStore
+  ): List[CheckpointState] =
+    store.listIncomplete(pipelineName)
+
+  // ============================================================================
+  // Private Implementation Methods
+  // ============================================================================
+
+  private def runFreshWithCheckpointing(
+    config: Config,
+    checkpointConfig: CheckpointConfig,
+    additionalHooks: PipelineHooks
+  ): Unit = {
+    val checkpointHooks: CheckpointHooks = checkpointConfig.createHooks()
+    val combinedHooks: PipelineHooks     = PipelineHooks.compose(checkpointHooks, additionalHooks)
+    run(config, combinedHooks)
+  }
+
+  /**
+   * Runs the pipeline starting from a specific component index.
+   *
+   * Components before startIndex are skipped. This is used internally
+   * for resume functionality.
+   *
+   * @param config The loaded HOCON configuration
+   * @param hooks Lifecycle hooks to invoke during execution
+   * @param startIndex Zero-based index of the first component to execute
+   */
+  private def runFromIndex(config: Config, hooks: PipelineHooks, startIndex: Int): Unit = {
+    val pipelineStartTime: Long                         = System.currentTimeMillis()
+    var componentsSucceeded: Int                        = startIndex // Count skipped as "succeeded"
+    var pipelineConfig: PipelineConfig                  = null
+    var currentComponentConfig: Option[ComponentConfig] = None
+    val failures: scala.collection.mutable.ListBuffer[(ComponentConfig, Throwable)] =
+      scala.collection.mutable.ListBuffer.empty
+
+    try {
+      // Configure SparkSession if spark block is present
+      if (config.hasPath("spark")) {
+        val sparkConfig: SparkConfig = ConfigSource.fromConfig(config.getConfig("spark")).loadOrThrow[SparkConfig]
+        logger.info("Configuring SparkSession from config")
+        SparkSessionWrapper.configure(sparkConfig)
+      }
+
+      // Load pipeline configuration
+      pipelineConfig = ConfigSource.fromConfig(config.getConfig("pipeline")).loadOrThrow[PipelineConfig]
+
+      logger.info(s"Starting pipeline: ${pipelineConfig.pipelineName}")
+      logger.info(s"Resuming from component ${startIndex + 1}/${pipelineConfig.pipelineComponents.size}")
+      if (!pipelineConfig.failFast) {
+        logger.info("Running in continue-on-error mode (failFast=false)")
+      }
+
+      // Invoke beforePipeline hook
+      hooks.beforePipeline(pipelineConfig)
+
+      val totalComponents: Int = pipelineConfig.pipelineComponents.size
+
+      // Execute each component starting from startIndex
+      pipelineConfig.pipelineComponents.zipWithIndex.drop(startIndex).foreach {
+        case (componentConfig: ComponentConfig, index: Int) =>
+          currentComponentConfig = Some(componentConfig)
+          val componentNumber: Int = index + 1
+
+          try {
+            // Invoke beforeComponent hook
+            hooks.beforeComponent(componentConfig, index, totalComponents)
+
+            logger.info(s"[$componentNumber/$totalComponents] Instantiating: ${componentConfig.instanceName}")
+            logger.debug(s"Instance type: ${componentConfig.instanceType}")
+
+            val component: PipelineComponent = ComponentInstantiator.instantiate[PipelineComponent](componentConfig)
+
+            logger.info(s"[$componentNumber/$totalComponents] Running: ${componentConfig.instanceName}")
+            val componentStartTime: Long = System.currentTimeMillis()
+
+            component.run()
+
+            val duration: Long = System.currentTimeMillis() - componentStartTime
+            logger.info(s"[$componentNumber/$totalComponents] Completed: ${componentConfig.instanceName} (${duration}ms)")
+
+            // Invoke afterComponent hook
+            hooks.afterComponent(componentConfig, index, totalComponents, duration)
+
+            componentsSucceeded += 1
+          } catch {
+            case e: Exception if !pipelineConfig.failFast =>
+              // Continue on error mode: record failure and continue
+              logger.error(
+                s"[$componentNumber/$totalComponents] Failed: ${componentConfig.instanceName} - ${e.getMessage}",
+                e
+              )
+              hooks.onComponentFailure(componentConfig, index, e)
+              failures += ((componentConfig, e))
+          }
+          currentComponentConfig = None
+      }
+
+      val totalDuration: Long = System.currentTimeMillis() - pipelineStartTime
+
+      if (failures.isEmpty) {
+        logger.info(s"Pipeline completed successfully: ${pipelineConfig.pipelineName}")
+        hooks.afterPipeline(pipelineConfig, PipelineResult.Success(totalDuration, componentsSucceeded))
+      } else {
+        logger.warn(s"Pipeline completed with ${failures.size} failure(s): ${pipelineConfig.pipelineName}")
+        val result: PipelineResult = PipelineResult.PartialSuccess(
+          totalDuration,
+          componentsSucceeded,
+          failures.size,
+          failures.toList
+        )
+        hooks.afterPipeline(pipelineConfig, result)
+      }
+
+    } catch {
+      case e: ComponentInstantiationException =>
+        logger.error(s"Failed to instantiate component: ${e.getMessage}", e)
+        currentComponentConfig.foreach(cc => hooks.onComponentFailure(cc, componentsSucceeded, e))
+        if (pipelineConfig != null) {
+          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsSucceeded))
+        }
+        throw e
+      case e: pureconfig.error.ConfigReaderException[_] =>
+        val wrapped: ConfigurationException = ConfigurationException.fromConfigReaderException(e)
+        logger.error(s"Configuration error: ${wrapped.getMessage}", wrapped)
+        if (pipelineConfig != null) {
+          hooks.afterPipeline(
+            pipelineConfig,
+            PipelineResult.Failure(wrapped, currentComponentConfig, componentsSucceeded)
+          )
+        }
+        throw wrapped
+      case e: Exception =>
+        logger.error(s"Pipeline failed: ${e.getMessage}", e)
+        currentComponentConfig.foreach(cc => hooks.onComponentFailure(cc, componentsSucceeded, e))
+        if (pipelineConfig != null) {
+          hooks.afterPipeline(pipelineConfig, PipelineResult.Failure(e, currentComponentConfig, componentsSucceeded))
+        }
+        throw e
     }
   }
 }

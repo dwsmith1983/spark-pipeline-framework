@@ -12,8 +12,8 @@ import scala.io.Source
 /** Tests for DataQualitySink and related classes. */
 class DataQualitySinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEach {
 
-  var tempDir: File   = _
-  var tempFile: File  = _
+  var tempDir: File      = _
+  var tempFile: File     = _
   val timestamp: Instant = Instant.parse("2024-01-01T00:00:00Z")
 
   override def beforeEach(): Unit = {
@@ -101,7 +101,7 @@ class DataQualitySinkSpec extends AnyFunSpec with Matchers with BeforeAndAfterEa
     }
 
     it("should use writeAll for multiple results") {
-      val sink    = DataQualitySink.file(tempFile.getAbsolutePath)
+      val sink = DataQualitySink.file(tempFile.getAbsolutePath)
       val results = Seq(
         DataQualityResult.Passed("c1", "t1", Map.empty, timestamp),
         DataQualityResult.Passed("c2", "t2", Map.empty, timestamp)
