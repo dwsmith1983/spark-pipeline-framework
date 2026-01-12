@@ -58,7 +58,7 @@ class StreamingHooksSpec extends AnyFunSpec with Matchers {
         val composed = StreamingHooks.compose(hook1, hook2)
         composed.onQueryStart("test", "id-123")
 
-        calls should contain inOrderOnly ("hook1:start:test", "hook2:start:test")
+        (calls should contain).inOrderOnly("hook1:start:test", "hook2:start:test")
       }
 
       it("should continue calling hooks even if one throws") {

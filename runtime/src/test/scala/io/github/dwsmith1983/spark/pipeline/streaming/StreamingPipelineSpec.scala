@@ -13,7 +13,7 @@ import java.nio.file.{Files, Path}
 
 /** Tests for StreamingSource, StreamingSink, and StreamingPipeline. */
 class StreamingPipelineSpec
-    extends AnyFunSpec
+  extends AnyFunSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach {
@@ -70,7 +70,7 @@ class StreamingPipelineSpec
 
     it("should allow overriding watermark configuration") {
       val source = new StreamingSource {
-        override def readStream(): DataFrame       = spark.emptyDataFrame
+        override def readStream(): DataFrame         = spark.emptyDataFrame
         override def watermarkColumn: Option[String] = Some("event_time")
         override def watermarkDelay: Option[String]  = Some("10 minutes")
       }
@@ -86,7 +86,7 @@ class StreamingPipelineSpec
       val sink = new StreamingSink {
         override def writeStream(df: DataFrame): DataStreamWriter[Row] =
           df.writeStream.format("console")
-        override def outputMode: OutputMode       = OutputMode.Append()
+        override def outputMode: OutputMode     = OutputMode.Append()
         override def checkpointLocation: String = tempDir.resolve("checkpoint").toString
       }
 
@@ -102,7 +102,7 @@ class StreamingPipelineSpec
       val sink = new StreamingSink {
         override def writeStream(df: DataFrame): DataStreamWriter[Row] =
           df.writeStream.format("console")
-        override def outputMode: OutputMode       = OutputMode.Append()
+        override def outputMode: OutputMode     = OutputMode.Append()
         override def checkpointLocation: String = tempDir.resolve("checkpoint").toString
       }
 
@@ -128,9 +128,9 @@ class StreamingPipelineSpec
           override def writeStream(df: DataFrame): DataStreamWriter[Row] =
             df.writeStream.format("memory")
 
-          override def outputMode: OutputMode       = OutputMode.Append()
+          override def outputMode: OutputMode     = OutputMode.Append()
           override def checkpointLocation: String = checkpointPath
-          override def queryName: Option[String]    = Some("rate_test_output")
+          override def queryName: Option[String]  = Some("rate_test_output")
         }
 
         override def trigger: TriggerConfig = TriggerConfig.Once
@@ -146,7 +146,7 @@ class StreamingPipelineSpec
         // Note: Once trigger may complete before rate source generates data,
         // so we only verify schema, not row count
         val result = spark.table("rate_test_output")
-        result.schema.fieldNames should contain allOf ("timestamp", "value")
+        (result.schema.fieldNames should contain).allOf("timestamp", "value")
       } finally {
         if (query.isActive) query.stop()
       }
@@ -168,14 +168,13 @@ class StreamingPipelineSpec
           override def writeStream(df: DataFrame): DataStreamWriter[Row] =
             df.writeStream.format("memory").queryName("transformed_rate_output")
 
-          override def outputMode: OutputMode       = OutputMode.Append()
+          override def outputMode: OutputMode     = OutputMode.Append()
           override def checkpointLocation: String = checkpointPath
         }
 
-        override def transform(df: DataFrame): DataFrame = {
+        override def transform(df: DataFrame): DataFrame =
           // Filter to only keep even values
           df.filter(df("value") % 2 === 0)
-        }
 
         override def trigger: TriggerConfig = TriggerConfig.Once
       }
@@ -211,7 +210,7 @@ class StreamingPipelineSpec
           override def writeStream(df: DataFrame): DataStreamWriter[Row] =
             df.writeStream.format("memory").queryName("identity_rate_output")
 
-          override def outputMode: OutputMode       = OutputMode.Append()
+          override def outputMode: OutputMode     = OutputMode.Append()
           override def checkpointLocation: String = checkpointPath
         }
 
@@ -226,7 +225,7 @@ class StreamingPipelineSpec
 
         val result = spark.table("identity_rate_output")
         // Should have both timestamp and value columns from rate source
-        result.schema.fieldNames should contain allOf ("timestamp", "value")
+        (result.schema.fieldNames should contain).allOf("timestamp", "value")
       } finally {
         if (query.isActive) query.stop()
       }
@@ -240,7 +239,7 @@ class StreamingPipelineSpec
         override def sink: StreamingSink = new StreamingSink {
           override def writeStream(df: DataFrame): DataStreamWriter[Row] =
             df.writeStream.format("console")
-          override def outputMode: OutputMode       = OutputMode.Append()
+          override def outputMode: OutputMode     = OutputMode.Append()
           override def checkpointLocation: String = "/tmp/test"
         }
       }

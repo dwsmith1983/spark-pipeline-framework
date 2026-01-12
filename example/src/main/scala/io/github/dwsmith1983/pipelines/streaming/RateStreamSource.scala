@@ -53,9 +53,7 @@ class RateStreamSource(conf: RateStreamSource.Config) extends StreamingSource {
     if (conf.enableWatermark) Some(conf.watermarkDelay) else None
 }
 
-/**
- * Factory for creating RateStreamSource instances from configuration.
- */
+/** Factory for creating RateStreamSource instances from configuration. */
 object RateStreamSource extends ConfigurableInstance {
 
   /**
@@ -72,8 +70,7 @@ object RateStreamSource extends ConfigurableInstance {
     rampUpTimeSeconds: Int = 0,
     numPartitions: Int = 1,
     enableWatermark: Boolean = false,
-    watermarkDelay: String = "10 seconds"
-  )
+    watermarkDelay: String = "10 seconds")
 
   override def createFromConfig(conf: com.typesafe.config.Config): RateStreamSource =
     new RateStreamSource(ConfigSource.fromConfig(conf).loadOrThrow[Config])

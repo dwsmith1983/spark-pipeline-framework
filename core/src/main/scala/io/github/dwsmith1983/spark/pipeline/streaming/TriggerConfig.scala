@@ -46,9 +46,7 @@ sealed trait TriggerConfig {
   def description: String
 }
 
-/**
- * Companion object containing trigger configuration implementations.
- */
+/** Companion object containing trigger configuration implementations. */
 object TriggerConfig {
 
   /**

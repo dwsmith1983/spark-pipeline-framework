@@ -52,9 +52,7 @@ class ConsoleStreamSink(conf: ConsoleStreamSink.Config) extends StreamingSink {
   override def queryName: Option[String] = conf.queryName
 }
 
-/**
- * Factory for creating ConsoleStreamSink instances from configuration.
- */
+/** Factory for creating ConsoleStreamSink instances from configuration. */
 object ConsoleStreamSink extends ConfigurableInstance {
 
   /**
@@ -71,8 +69,7 @@ object ConsoleStreamSink extends ConfigurableInstance {
     outputMode: String = "append",
     numRows: Int = 20,
     truncate: Boolean = true,
-    queryName: Option[String] = None
-  )
+    queryName: Option[String] = None)
 
   override def createFromConfig(conf: com.typesafe.config.Config): ConsoleStreamSink =
     new ConsoleStreamSink(ConfigSource.fromConfig(conf).loadOrThrow[Config])

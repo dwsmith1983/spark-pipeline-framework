@@ -95,9 +95,7 @@ trait StreamingHooks {
   }
 }
 
-/**
- * Companion object providing utilities for working with streaming hooks.
- */
+/** Companion object providing utilities for working with streaming hooks. */
 object StreamingHooks {
 
   private val logger: Logger = LogManager.getLogger(classOf[StreamingHooks])

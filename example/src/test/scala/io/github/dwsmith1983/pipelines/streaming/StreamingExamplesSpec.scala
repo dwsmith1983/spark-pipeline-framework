@@ -15,7 +15,7 @@ import java.nio.file.{Files, Path}
 
 /** Tests for example streaming implementations. */
 class StreamingExamplesSpec
-    extends AnyFunSpec
+  extends AnyFunSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach {
@@ -72,7 +72,7 @@ class StreamingExamplesSpec
       val df     = source.readStream()
 
       df.isStreaming shouldBe true
-      df.schema.fieldNames should contain allOf ("timestamp", "value")
+      (df.schema.fieldNames should contain).allOf("timestamp", "value")
     }
 
     it("should disable watermark by default") {
@@ -211,7 +211,7 @@ class StreamingExamplesSpec
         // Note: Once trigger may complete before rate source generates data,
         // so we only verify schema, not row count
         val result = spark.table("e2e_test")
-        result.schema.fieldNames should contain allOf ("timestamp", "value")
+        (result.schema.fieldNames should contain).allOf("timestamp", "value")
       } finally {
         if (query.isActive) query.stop()
       }

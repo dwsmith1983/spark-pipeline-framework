@@ -108,6 +108,6 @@ trait StreamingSource extends DataFlow {
   override final def run(): Unit =
     throw new UnsupportedOperationException(
       s"StreamingSource.run() should not be called directly. " +
-        s"Use StreamingPipeline to compose source '${name}' with a sink."
+        s"Use StreamingPipeline to compose source '$name' with a sink."
     )
 }

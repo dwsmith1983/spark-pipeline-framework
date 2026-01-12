@@ -46,7 +46,7 @@ class TriggerConverterSpec extends AnyFunSpec with Matchers with BeforeAndAfterA
 
         trigger shouldBe a[Trigger]
         // Spark returns "OneTimeTrigger" for Once
-        trigger.toString should (include("Once") or include("OneTime"))
+        trigger.toString should (include("Once").or(include("OneTime")))
       }
 
       it("should convert Continuous trigger") {
