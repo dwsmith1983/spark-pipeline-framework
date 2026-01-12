@@ -11,6 +11,7 @@ const sidebars: SidebarsConfig = {
     'hooks',
     'streaming',
     'deployment',
+    'contributing',
   ],
 };
 
