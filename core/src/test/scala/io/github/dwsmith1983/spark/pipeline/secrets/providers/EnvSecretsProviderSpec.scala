@@ -3,7 +3,7 @@ package io.github.dwsmith1983.spark.pipeline.secrets.providers
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 class EnvSecretsProviderSpec extends AnyFunSpec with Matchers {
 

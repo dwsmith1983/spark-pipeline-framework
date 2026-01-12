@@ -1,6 +1,6 @@
 package io.github.dwsmith1983.spark.pipeline.secrets
 
-import io.github.dwsmith1983.spark.pipeline.secrets.audit.{InMemorySecretsAuditLogger, SecretsAuditLogger}
+import io.github.dwsmith1983.spark.pipeline.secrets.audit.SecretsAuditLogger
 import io.github.dwsmith1983.spark.pipeline.secrets.providers.{
   AwsSecretsProvider,
   EnvSecretsProvider,
