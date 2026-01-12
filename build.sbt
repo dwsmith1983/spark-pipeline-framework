@@ -13,6 +13,7 @@ lazy val scalatestVersion = "3.2.17"
 lazy val scalacheckVersion = "1.17.0"
 lazy val log4jVersion = "2.23.1"
 lazy val micrometerVersion = "1.12.2"
+lazy val awsSdkVersion = "2.29.51"  // Optional: for AWS Secrets Manager integration
 
 // Spark version axes (SparkAxis defined in project/SparkAxis.scala)
 lazy val Spark3 = SparkAxis(spark35, "spark3")
@@ -211,7 +212,9 @@ lazy val core = (projectMatrix in file("core"))
       "com.github.pureconfig" %% "pureconfig" % pureConfigVersion,
       "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
       "org.apache.logging.log4j" % "log4j-core" % log4jVersion % Test,
-      "io.micrometer" % "micrometer-core" % micrometerVersion
+      "io.micrometer" % "micrometer-core" % micrometerVersion,
+      // Optional: AWS Secrets Manager integration (users include if needed)
+      "software.amazon.awssdk" % "secretsmanager" % awsSdkVersion % Provided
     )
   )
   .jvmPlatform(scalaVersions = Seq(scala212, scala213))
