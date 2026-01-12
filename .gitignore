@@ -53,3 +53,4 @@ website/static/api/
 
 # Execution logs
 .logs/
+.beads/
