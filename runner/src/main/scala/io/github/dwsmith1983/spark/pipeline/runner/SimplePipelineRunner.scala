@@ -332,4 +332,82 @@ object SimplePipelineRunner extends PipelineRunner {
     val config: Config = ConfigFactory.parseFile(new java.io.File(configPath)).resolve()
     dryRun(config, hooks)
   }
+
+  /**
+   * Validates the pipeline configuration without instantiating components.
+   *
+   * This method performs lightweight validation by checking:
+   *   - HOCON syntax correctness
+   *   - Required fields (pipelineName, pipelineComponents)
+   *   - Component class existence (Class.forName)
+   *   - Companion object existence and ConfigurableInstance trait
+   *
+   * Unlike `dryRun`, this does NOT call `createFromConfig` on components,
+   * making it faster and free of initialization side effects.
+   *
+   * Use `validate` for quick pre-flight checks, and `dryRun` when you need
+   * to verify that components can be fully instantiated with their configs.
+   *
+   * @param config The loaded HOCON configuration
+   * @return Validation result with all errors and warnings
+   */
+  def validate(config: Config): ValidationResult = {
+    logger.info("[validate] Starting configuration validation")
+    val result = ConfigValidator.validate(config)
+    result match {
+      case ValidationResult.Valid(name, count, warnings) =>
+        logger.info(s"[validate] Configuration valid: $name ($count components)")
+        warnings.foreach(w => logger.warn(s"[validate] Warning: ${w.fullMessage}"))
+      case ValidationResult.Invalid(errors, warnings) =>
+        logger.error(s"[validate] Configuration invalid: ${errors.size} error(s)")
+        errors.foreach(e => logger.error(s"[validate] ${e.fullMessage}"))
+        warnings.foreach(w => logger.warn(s"[validate] Warning: ${w.fullMessage}"))
+    }
+    result
+  }
+
+  /**
+   * Validates the pipeline configuration with options.
+   *
+   * @param config  The loaded HOCON configuration
+   * @param options Validation options (e.g., resource checking)
+   * @return Validation result with all errors and warnings
+   */
+  def validate(config: Config, options: ValidationOptions): ValidationResult = {
+    logger.info("[validate] Starting configuration validation")
+    val result = ConfigValidator.validate(config, options)
+    result match {
+      case ValidationResult.Valid(name, count, warnings) =>
+        logger.info(s"[validate] Configuration valid: $name ($count components)")
+        warnings.foreach(w => logger.warn(s"[validate] Warning: ${w.fullMessage}"))
+      case ValidationResult.Invalid(errors, warnings) =>
+        logger.error(s"[validate] Configuration invalid: ${errors.size} error(s)")
+        errors.foreach(e => logger.error(s"[validate] ${e.fullMessage}"))
+        warnings.foreach(w => logger.warn(s"[validate] Warning: ${w.fullMessage}"))
+    }
+    result
+  }
+
+  /**
+   * Validates a pipeline configuration from a file path.
+   *
+   * @param configPath Path to the HOCON configuration file
+   * @return Validation result with all errors and warnings
+   */
+  def validateFromFile(configPath: String): ValidationResult = {
+    logger.info(s"[validate] Validating configuration file: $configPath")
+    ConfigValidator.validateFromFile(configPath)
+  }
+
+  /**
+   * Validates a pipeline configuration from a file path with options.
+   *
+   * @param configPath Path to the HOCON configuration file
+   * @param options    Validation options (e.g., resource checking)
+   * @return Validation result with all errors and warnings
+   */
+  def validateFromFile(configPath: String, options: ValidationOptions): ValidationResult = {
+    logger.info(s"[validate] Validating configuration file: $configPath")
+    ConfigValidator.validateFromFile(configPath, options)
+  }
 }
