@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.0.1...v1.1.0) (2026-01-12)
+
+
+### Features
+
+* v1.1.0 release - Configuration validation, Secrets management, Streaming core ([#70](https://github.com/dwsmith1983/spark-pipeline-framework/issues/70)) ([8bc9e56](https://github.com/dwsmith1983/spark-pipeline-framework/commit/8bc9e56cfdbbd5ecb80db228ac892a10a7fca5fa))
+
 ## [1.0.1](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.0.0...v1.0.1) (2025-12-31)
 
 
