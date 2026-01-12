@@ -849,6 +849,293 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
     }
 
     // =========================================================================
+    // VALIDATE MODE TESTS
+    // =========================================================================
+
+    describe("validate mode") {
+
+      it("should return Valid for correct configuration") {
+        val config: Config = ConfigFactory.parseString("""
+          pipeline {
+            pipeline-name = "Valid Config"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Tracker"
+                instance-config { component-id = "validate-test" }
+              }
+            ]
+          }
+        """)
+
+        val result: ValidationResult = SimplePipelineRunner.validate(config)
+
+        result shouldBe a[ValidationResult.Valid]
+        val valid: ValidationResult.Valid = result.asInstanceOf[ValidationResult.Valid]
+        valid.pipelineName shouldBe "Valid Config"
+        valid.componentCount shouldBe 1
+        valid.isValid shouldBe true
+        // Validate does NOT execute or instantiate components
+        ExecutionTracker.executedComponents shouldBe empty
+      }
+
+      it("should return Invalid for missing pipeline block") {
+        val config: Config = ConfigFactory.parseString("""
+          spark { master = "local[1]" }
+        """)
+
+        val result: ValidationResult = SimplePipelineRunner.validate(config)
+
+        result shouldBe a[ValidationResult.Invalid]
+        result.isInvalid shouldBe true
+        val invalid: ValidationResult.Invalid = result.asInstanceOf[ValidationResult.Invalid]
+        invalid.errors.head.phase shouldBe ValidationPhase.RequiredFields
+      }
+
+      it("should return Invalid for empty pipeline components list") {
+        val config: Config = ConfigFactory.parseString("""
+          pipeline {
+            pipeline-name = "Empty Components"
+            pipeline-components = []
+          }
+        """)
+
+        val result: ValidationResult = SimplePipelineRunner.validate(config)
+
+        result shouldBe a[ValidationResult.Invalid]
+        val invalid: ValidationResult.Invalid = result.asInstanceOf[ValidationResult.Invalid]
+        invalid.errors.exists(_.message.contains("at least one component")) shouldBe true
+      }
+
+      it("should return Invalid for nonexistent component class") {
+        val config: Config = ConfigFactory.parseString("""
+          pipeline {
+            pipeline-name = "Invalid Class"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.NonExistentComponent"
+                instance-name = "Ghost"
+                instance-config {}
+              }
+            ]
+          }
+        """)
+
+        val result: ValidationResult = SimplePipelineRunner.validate(config)
+
+        result shouldBe a[ValidationResult.Invalid]
+        val invalid: ValidationResult.Invalid = result.asInstanceOf[ValidationResult.Invalid]
+        invalid.errors.head.phase shouldBe ValidationPhase.TypeResolution
+        invalid.errors.head.message should include("Class not found")
+      }
+
+      it("should return Invalid when companion object does not exist") {
+        val config: Config = ConfigFactory.parseString("""
+          pipeline {
+            pipeline-name = "No Companion"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.NoCompanionComponent"
+                instance-name = "NoCompanion"
+                instance-config {}
+              }
+            ]
+          }
+        """)
+
+        val result: ValidationResult = SimplePipelineRunner.validate(config)
+
+        result shouldBe a[ValidationResult.Invalid]
+        val invalid: ValidationResult.Invalid = result.asInstanceOf[ValidationResult.Invalid]
+        invalid.errors.head.phase shouldBe ValidationPhase.TypeResolution
+        invalid.errors.head.message should include("Companion object not found")
+      }
+
+      it("should return Invalid when companion does not extend ConfigurableInstance") {
+        val config: Config = ConfigFactory.parseString("""
+          pipeline {
+            pipeline-name = "Bad Companion"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.BadCompanionComponent"
+                instance-name = "BadCompanion"
+                instance-config {}
+              }
+            ]
+          }
+        """)
+
+        val result: ValidationResult = SimplePipelineRunner.validate(config)
+
+        result shouldBe a[ValidationResult.Invalid]
+        val invalid: ValidationResult.Invalid = result.asInstanceOf[ValidationResult.Invalid]
+        invalid.errors.head.phase shouldBe ValidationPhase.ComponentConfig
+        invalid.errors.head.message should include("does not extend ConfigurableInstance")
+      }
+
+      it("should collect all errors instead of stopping at first") {
+        val config: Config = ConfigFactory.parseString("""
+          pipeline {
+            pipeline-name = "Multiple Errors"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Valid"
+                instance-config { component-id = "valid" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.NonExistent1"
+                instance-name = "Ghost1"
+                instance-config {}
+              },
+              {
+                instance-type = "io.github.dwsmith1983.NonExistent2"
+                instance-name = "Ghost2"
+                instance-config {}
+              }
+            ]
+          }
+        """)
+
+        val result: ValidationResult = SimplePipelineRunner.validate(config)
+
+        result shouldBe a[ValidationResult.Invalid]
+        result.asInstanceOf[ValidationResult.Invalid].errors should have size 2
+      }
+
+      it("should include location information in errors") {
+        val config: Config = ConfigFactory.parseString("""
+          pipeline {
+            pipeline-name = "Error Location"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.NonExistent"
+                instance-name = "GhostComponent"
+                instance-config {}
+              }
+            ]
+          }
+        """)
+
+        val result: ValidationResult = SimplePipelineRunner.validate(config)
+
+        result shouldBe a[ValidationResult.Invalid]
+        val error: ValidationError = result.asInstanceOf[ValidationResult.Invalid].errors.head
+        error.location shouldBe a[ErrorLocation.Component]
+        val componentLoc: ErrorLocation.Component = error.location.asInstanceOf[ErrorLocation.Component]
+        componentLoc.index shouldBe 0
+        componentLoc.instanceName shouldBe "GhostComponent"
+      }
+
+      it("should support ValidationResult combine operator") {
+        val valid1: ValidationResult = ValidationResult.Valid("Test", 1)
+        val valid2: ValidationResult =
+          ValidationResult.Valid("Test", 1, List(ValidationWarning(ErrorLocation.Pipeline, "warn")))
+        val invalid: ValidationResult = ValidationResult.Invalid(
+          List(ValidationError(ValidationPhase.TypeResolution, ErrorLocation.Pipeline, "error"))
+        )
+
+        // Valid ++ Valid = Valid with combined warnings
+        val combined1: ValidationResult = valid1 ++ valid2
+        combined1 shouldBe a[ValidationResult.Valid]
+        combined1.warnings should have size 1
+
+        // Valid ++ Invalid = Invalid
+        val combined2: ValidationResult = valid1 ++ invalid
+        combined2 shouldBe a[ValidationResult.Invalid]
+
+        // Invalid ++ Invalid = Invalid with combined errors
+        val combined3: ValidationResult = invalid ++ invalid
+        combined3 shouldBe a[ValidationResult.Invalid]
+        combined3.errors should have size 2
+      }
+
+      it("should validate from HOCON string") {
+        val hocon: String = """
+          pipeline {
+            pipeline-name = "From String"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Tracker"
+                instance-config { component-id = "string-test" }
+              }
+            ]
+          }
+        """
+
+        val result: ValidationResult = ConfigValidator.validateFromString(hocon)
+
+        result shouldBe a[ValidationResult.Valid]
+      }
+
+      it("should return ConfigSyntax error for malformed HOCON") {
+        val malformedHocon: String = """
+          pipeline {
+            pipeline-name = "Malformed
+            # Missing closing quote
+          }
+        """
+
+        val result: ValidationResult = ConfigValidator.validateFromString(malformedHocon)
+
+        result shouldBe a[ValidationResult.Invalid]
+        result.asInstanceOf[ValidationResult.Invalid].errors.head.phase shouldBe ValidationPhase.ConfigSyntax
+      }
+
+      it("should be faster than dryRun (does not instantiate)") {
+        // This is a behavioral test - validate should NOT call createFromConfig
+        val config: Config = ConfigFactory.parseString("""
+          pipeline {
+            pipeline-name = "No Instantiation"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Tracker"
+                instance-config { component-id = "no-instantiate" }
+              }
+            ]
+          }
+        """)
+
+        SimplePipelineRunner.validate(config)
+
+        // The component should NOT be instantiated (which would trigger tracking)
+        ExecutionTracker.executedComponents shouldBe empty
+      }
+
+      it("should validate multiple components successfully") {
+        val config: Config = ConfigFactory.parseString("""
+          pipeline {
+            pipeline-name = "Multi Component Validate"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "First"
+                instance-config { component-id = "first" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.NoOpComponent"
+                instance-name = "Second"
+                instance-config {}
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Third"
+                instance-config { component-id = "third" }
+              }
+            ]
+          }
+        """)
+
+        val result: ValidationResult = SimplePipelineRunner.validate(config)
+
+        result shouldBe a[ValidationResult.Valid]
+        result.asInstanceOf[ValidationResult.Valid].componentCount shouldBe 3
+      }
+    }
+
+    // =========================================================================
     // FAIL-FAST / CONTINUE-ON-ERROR TESTS
     // =========================================================================
 
@@ -1188,4 +1475,21 @@ class SessionCaptureComponent(conf: SessionCaptureConfig) extends DataFlow {
 
   override def run(): Unit =
     ExecutionTracker.capturedSessions(conf.captureId) = spark
+}
+
+// Component without companion object (for validation testing)
+class NoCompanionComponent extends DataFlow {
+
+  override def run(): Unit = ()
+}
+
+// Component with companion that does NOT extend ConfigurableInstance
+object BadCompanionComponent {
+  // Does not extend ConfigurableInstance
+  def create(): BadCompanionComponent = new BadCompanionComponent()
+}
+
+class BadCompanionComponent extends DataFlow {
+
+  override def run(): Unit = ()
 }
