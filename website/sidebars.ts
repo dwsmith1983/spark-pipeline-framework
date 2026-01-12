@@ -9,6 +9,7 @@ const sidebars: SidebarsConfig = {
     'secrets-management',
     'components',
     'hooks',
+    'data-quality',
     'streaming',
     'deployment',
     'contributing',
