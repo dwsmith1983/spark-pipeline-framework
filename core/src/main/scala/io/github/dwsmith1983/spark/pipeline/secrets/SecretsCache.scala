@@ -22,7 +22,7 @@ class SecretsCache(ttlMillis: Long = SecretsCache.DefaultTtlMillis) {
    * @param key Cache key (typically provider + path + key)
    * @return Some(value) if cached and valid, None otherwise
    */
-  def get(key: String): Option[String] = {
+  def get(key: String): Option[String] =
     cache.get(key).flatMap { entry =>
       if (System.currentTimeMillis() < entry.expiresAt) {
         Some(entry.value)
@@ -31,7 +31,6 @@ class SecretsCache(ttlMillis: Long = SecretsCache.DefaultTtlMillis) {
         None
       }
     }
-  }
 
   /**
    * Store a secret value in the cache.
@@ -41,7 +40,7 @@ class SecretsCache(ttlMillis: Long = SecretsCache.DefaultTtlMillis) {
    */
   def put(key: String, value: String): Unit = {
     val expiresAt = System.currentTimeMillis() + ttlMillis
-    val _ = cache.put(key, CachedEntry(value, expiresAt))
+    val _         = cache.put(key, CachedEntry(value, expiresAt))
   }
 
   /**
@@ -72,9 +71,7 @@ class SecretsCache(ttlMillis: Long = SecretsCache.DefaultTtlMillis) {
     val _ = cache.remove(key)
   }
 
-  /**
-   * Invalidate all cache entries.
-   */
+  /** Invalidate all cache entries. */
   def invalidateAll(): Unit =
     cache.clear()
 

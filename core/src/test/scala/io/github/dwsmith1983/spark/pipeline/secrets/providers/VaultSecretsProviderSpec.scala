@@ -44,7 +44,7 @@ class VaultSecretsProviderSpec extends AnyFunSpec with Matchers {
     }
 
     it("should fail when key not found in secret") {
-      val secrets = Map("secret/path" -> """{"foo": "bar"}""")
+      val secrets  = Map("secret/path" -> """{"foo": "bar"}""")
       val provider = VaultSecretsProvider.withMockClient(secrets)
 
       val result = provider.resolve("secret/path", Some("missing"))

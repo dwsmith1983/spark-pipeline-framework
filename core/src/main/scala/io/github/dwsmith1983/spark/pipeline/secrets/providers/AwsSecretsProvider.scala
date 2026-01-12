@@ -37,7 +37,7 @@ class AwsSecretsProvider(client: AwsSecretsClient) extends SecretsProvider {
   override def resolve(path: String, key: Option[String]): Try[String] =
     client.getSecretValue(path).flatMap { secretValue =>
       key match {
-        case None => Success(secretValue)
+        case None    => Success(secretValue)
         case Some(k) => extractJsonKey(secretValue, k, path)
       }
     }
@@ -85,9 +85,7 @@ trait AwsSecretsClient {
    */
   def isAvailable: Boolean
 
-  /**
-   * Close the client and release resources.
-   */
+  /** Close the client and release resources. */
   def close(): Unit
 }
 
@@ -112,21 +110,21 @@ object AwsSecretsManagerClient {
   def create(region: String): Try[AwsSecretsClient] =
     Try {
       // Use reflection to avoid compile-time dependency
-      val regionClass = Class.forName("software.amazon.awssdk.regions.Region")
-      val regionOf = regionClass.getMethod("of", classOf[String])
+      val regionClass    = Class.forName("software.amazon.awssdk.regions.Region")
+      val regionOf       = regionClass.getMethod("of", classOf[String])
       val regionInstance = regionOf.invoke(null, region)
 
       val builderClass = Class.forName(
         "software.amazon.awssdk.services.secretsmanager.SecretsManagerClient"
       )
       val builderMethod = builderClass.getMethod("builder")
-      val builder = builderMethod.invoke(null)
+      val builder       = builderMethod.invoke(null)
 
       val regionMethod = builder.getClass.getMethod("region", regionClass)
       regionMethod.invoke(builder, regionInstance)
 
       val buildMethod = builder.getClass.getMethod("build")
-      val client = buildMethod.invoke(builder)
+      val client      = buildMethod.invoke(builder)
 
       new ReflectiveAwsClient(client)
     }
@@ -145,13 +143,13 @@ private class ReflectiveAwsClient(client: Any) extends AwsSecretsClient {
         "software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest"
       )
       val builderMethod = requestBuilderClass.getMethod("builder")
-      val builder = builderMethod.invoke(null)
+      val builder       = builderMethod.invoke(null)
 
       val secretIdMethod = builder.getClass.getMethod("secretId", classOf[String])
       secretIdMethod.invoke(builder, secretId)
 
       val buildMethod = builder.getClass.getMethod("build")
-      val request = buildMethod.invoke(builder)
+      val request     = buildMethod.invoke(builder)
 
       val getSecretMethod = client.getClass.getMethod(
         "getSecretValue",
@@ -160,7 +158,7 @@ private class ReflectiveAwsClient(client: Any) extends AwsSecretsClient {
       val response = getSecretMethod.invoke(client, request)
 
       val secretStringMethod = response.getClass.getMethod("secretString")
-      val secretString = secretStringMethod.invoke(response)
+      val secretString       = secretStringMethod.invoke(response)
 
       if (secretString == null) {
         throw new IllegalStateException(
@@ -180,13 +178,13 @@ private class ReflectiveAwsClient(client: Any) extends AwsSecretsClient {
         "software.amazon.awssdk.services.secretsmanager.model.DescribeSecretRequest"
       )
       val builderMethod = requestBuilderClass.getMethod("builder")
-      val builder = builderMethod.invoke(null)
+      val builder       = builderMethod.invoke(null)
 
       val secretIdMethod = builder.getClass.getMethod("secretId", classOf[String])
       secretIdMethod.invoke(builder, "__health_check__")
 
       val buildMethod = builder.getClass.getMethod("build")
-      val request = buildMethod.invoke(builder)
+      val request     = buildMethod.invoke(builder)
 
       val describeMethod = client.getClass.getMethod("describeSecret", requestBuilderClass)
 
@@ -205,7 +203,7 @@ private class ReflectiveAwsClient(client: Any) extends AwsSecretsClient {
   override def close(): Unit =
     try {
       val closeMethod = client.getClass.getMethod("close")
-      val _ = closeMethod.invoke(client)
+      val _           = closeMethod.invoke(client)
     } catch {
       case _: Exception => ()
     }

@@ -21,12 +21,11 @@ import scala.util.{Failure, Success, Try}
  * @param envProvider Function to get environment variables (injectable for testing)
  */
 class EnvSecretsProvider(
-  envProvider: String => Option[String] = EnvSecretsProvider.systemEnv
-) extends SecretsProvider {
+  envProvider: String => Option[String] = EnvSecretsProvider.systemEnv) extends SecretsProvider {
 
   override val scheme: String = "env"
 
-  override def resolve(path: String, key: Option[String]): Try[String] = {
+  override def resolve(path: String, key: Option[String]): Try[String] =
     if (key.isDefined) {
       Failure(
         new IllegalArgumentException(
@@ -45,7 +44,6 @@ class EnvSecretsProvider(
           )
       }
     }
-  }
 
   override def isAvailable: Boolean = true
 
@@ -54,9 +52,7 @@ class EnvSecretsProvider(
 
 object EnvSecretsProvider {
 
-  /**
-   * Default environment variable provider using System.getenv.
-   */
+  /** Default environment variable provider using System.getenv. */
   val systemEnv: String => Option[String] =
     name => Option(System.getenv(name))
 

@@ -1,7 +1,11 @@
 package io.github.dwsmith1983.spark.pipeline.secrets
 
 import io.github.dwsmith1983.spark.pipeline.secrets.audit.{InMemorySecretsAuditLogger, SecretsAuditLogger}
-import io.github.dwsmith1983.spark.pipeline.secrets.providers.{AwsSecretsProvider, EnvSecretsProvider, VaultSecretsProvider}
+import io.github.dwsmith1983.spark.pipeline.secrets.providers.{
+  AwsSecretsProvider,
+  EnvSecretsProvider,
+  VaultSecretsProvider
+}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -13,7 +17,7 @@ class SecretsResolverSpec extends AnyFunSpec with Matchers {
 
     it("should return config unchanged when no references") {
       val resolver = SecretsResolver.builder().build()
-      val config = """database { host = "localhost" }"""
+      val config   = """database { host = "localhost" }"""
 
       resolver.resolve(config) shouldBe Success(config)
     }
@@ -24,7 +28,7 @@ class SecretsResolverSpec extends AnyFunSpec with Matchers {
         .withProvider(EnvSecretsProvider.withEnv(env))
         .build()
 
-      val config = """database { password = "${secret:env://DB_PASSWORD}" }"""
+      val config   = """database { password = "${secret:env://DB_PASSWORD}" }"""
       val expected = """database { password = "secret123" }"""
 
       resolver.resolve(config) shouldBe Success(expected)
@@ -72,7 +76,7 @@ class SecretsResolverSpec extends AnyFunSpec with Matchers {
     }
 
     it("should resolve mixed provider references") {
-      val env = Map("API_KEY" -> "key123")
+      val env          = Map("API_KEY" -> "key123")
       val vaultSecrets = Map("secret/db" -> """{"password": "vaultpass"}""")
 
       val resolver = SecretsResolver.builder()
@@ -124,7 +128,7 @@ class SecretsResolverSpec extends AnyFunSpec with Matchers {
           Success("resolved")
         }
         override def isAvailable: Boolean = true
-        override def close(): Unit = ()
+        override def close(): Unit        = ()
       }
 
       val resolver = SecretsResolver.builder()
@@ -164,7 +168,7 @@ class SecretsResolverSpec extends AnyFunSpec with Matchers {
 
     it("should log successful access events") {
       val auditLogger = SecretsAuditLogger.inMemory
-      val env = Map("SECRET" -> "value")
+      val env         = Map("SECRET" -> "value")
 
       val resolver = SecretsResolver.builder()
         .withProvider(EnvSecretsProvider.withEnv(env))
@@ -209,8 +213,8 @@ class SecretsResolverSpec extends AnyFunSpec with Matchers {
 
       val status = resolver.checkProviders()
 
-      status should contain key "env"
-      status should contain key "vault"
+      (status should contain).key("env")
+      (status should contain).key("vault")
       status("env") shouldBe true
       status("vault") shouldBe true
     }

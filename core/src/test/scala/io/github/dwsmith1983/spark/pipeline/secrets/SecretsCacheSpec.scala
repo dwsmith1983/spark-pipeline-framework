@@ -62,7 +62,7 @@ class SecretsCacheSpec extends AnyFunSpec with Matchers {
     }
 
     it("should compute and cache values with getOrCompute") {
-      val cache = SecretsCache()
+      val cache        = SecretsCache()
       var computeCount = 0
 
       val (value1, cached1) = cache.getOrCompute("key1") {

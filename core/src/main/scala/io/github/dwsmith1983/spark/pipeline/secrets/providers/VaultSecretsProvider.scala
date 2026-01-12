@@ -63,9 +63,7 @@ class VaultSecretsProvider(client: VaultClient) extends SecretsProvider {
     }
 }
 
-/**
- * Interface for Vault operations.
- */
+/** Interface for Vault operations. */
 trait VaultClient {
 
   /**
@@ -83,9 +81,7 @@ trait VaultClient {
    */
   def isAvailable: Boolean
 
-  /**
-   * Close the client.
-   */
+  /** Close the client. */
   def close(): Unit
 }
 
@@ -101,16 +97,15 @@ trait VaultClient {
 class HttpVaultClient(
   address: String,
   token: String,
-  namespace: Option[String] = None
-) extends VaultClient {
+  namespace: Option[String] = None) extends VaultClient {
 
   private val baseUrl = address.stripSuffix("/")
 
   override def readSecret(path: String): Try[String] =
     Try {
       val normalizedPath = if (path.startsWith("/")) path.substring(1) else path
-      val url = new URL(s"$baseUrl/v1/$normalizedPath")
-      val connection = url.openConnection().asInstanceOf[HttpURLConnection]
+      val url            = new URL(s"$baseUrl/v1/$normalizedPath")
+      val connection     = url.openConnection().asInstanceOf[HttpURLConnection]
 
       try {
         connection.setRequestMethod("GET")
@@ -126,7 +121,7 @@ class HttpVaultClient(
             new InputStreamReader(connection.getInputStream, StandardCharsets.UTF_8)
           )
           try {
-            val response = new StringBuilder
+            val response     = new StringBuilder
             var line: String = reader.readLine()
             while (line != null) {
               response.append(line)
@@ -154,7 +149,7 @@ class HttpVaultClient(
 
   override def isAvailable: Boolean =
     try {
-      val url = new URL(s"$baseUrl/v1/sys/health")
+      val url        = new URL(s"$baseUrl/v1/sys/health")
       val connection = url.openConnection().asInstanceOf[HttpURLConnection]
       try {
         connection.setRequestMethod("GET")
@@ -225,8 +220,8 @@ object VaultSecretsProvider {
    */
   def fromEnv(): Try[VaultSecretsProvider] = {
     val addressOpt = Option(System.getenv("VAULT_ADDR"))
-    val tokenOpt = Option(System.getenv("VAULT_TOKEN"))
-    val namespace = Option(System.getenv("VAULT_NAMESPACE"))
+    val tokenOpt   = Option(System.getenv("VAULT_TOKEN"))
+    val namespace  = Option(System.getenv("VAULT_NAMESPACE"))
 
     (addressOpt, tokenOpt) match {
       case (Some(address), Some(token)) =>

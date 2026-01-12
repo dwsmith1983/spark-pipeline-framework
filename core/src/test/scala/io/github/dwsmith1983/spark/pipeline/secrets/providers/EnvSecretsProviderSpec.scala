@@ -15,7 +15,7 @@ class EnvSecretsProviderSpec extends AnyFunSpec with Matchers {
     }
 
     it("should resolve existing environment variables") {
-      val env = Map("TEST_SECRET" -> "secret-value")
+      val env      = Map("TEST_SECRET" -> "secret-value")
       val provider = EnvSecretsProvider.withEnv(env)
 
       provider.resolve("TEST_SECRET", None) shouldBe Success("secret-value")
@@ -30,7 +30,7 @@ class EnvSecretsProviderSpec extends AnyFunSpec with Matchers {
     }
 
     it("should reject key syntax") {
-      val env = Map("MY_SECRET" -> """{"key": "value"}""")
+      val env      = Map("MY_SECRET" -> """{"key": "value"}""")
       val provider = EnvSecretsProvider.withEnv(env)
 
       val result = provider.resolve("MY_SECRET", Some("key"))

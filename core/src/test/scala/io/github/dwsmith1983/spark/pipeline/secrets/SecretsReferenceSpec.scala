@@ -58,7 +58,7 @@ class SecretsReferenceSpec extends AnyFunSpec with Matchers {
     }
 
     it("should trim whitespace from path and key") {
-      val ref = "${secret:aws://  my-path  #  my-key  }"
+      val ref    = "${secret:aws://  my-path  #  my-key  }"
       val result = SecretsReference.parse(ref)
       result.isSuccess shouldBe true
       result.get.path shouldBe "my-path"

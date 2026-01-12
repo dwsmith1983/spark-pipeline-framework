@@ -15,7 +15,7 @@ class AwsSecretsProviderSpec extends AnyFunSpec with Matchers {
     }
 
     it("should resolve secret without key") {
-      val secrets = Map("my-app/connection" -> "postgresql://localhost:5432/db")
+      val secrets  = Map("my-app/connection" -> "postgresql://localhost:5432/db")
       val provider = AwsSecretsProvider.withMockClient(secrets)
 
       provider.resolve("my-app/connection", None) shouldBe
@@ -40,7 +40,7 @@ class AwsSecretsProviderSpec extends AnyFunSpec with Matchers {
     }
 
     it("should fail when JSON key not found") {
-      val secrets = Map("my-secret" -> """{"foo": "bar"}""")
+      val secrets  = Map("my-secret" -> """{"foo": "bar"}""")
       val provider = AwsSecretsProvider.withMockClient(secrets)
 
       val result = provider.resolve("my-secret", Some("missing-key"))
@@ -59,7 +59,7 @@ class AwsSecretsProviderSpec extends AnyFunSpec with Matchers {
     }
 
     it("should extract numeric values from JSON") {
-      val secrets = Map("config" -> """{"port": 5432, "enabled": true}""")
+      val secrets  = Map("config" -> """{"port": 5432, "enabled": true}""")
       val provider = AwsSecretsProvider.withMockClient(secrets)
 
       provider.resolve("config", Some("port")) shouldBe Success("5432")

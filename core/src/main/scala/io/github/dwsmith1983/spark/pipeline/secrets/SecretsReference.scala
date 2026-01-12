@@ -26,9 +26,7 @@ case class SecretsReference(
   key: Option[String],
   original: String)
 
-/**
- * Companion object for parsing secret references.
- */
+/** Companion object for parsing secret references. */
 object SecretsReference {
 
   /**

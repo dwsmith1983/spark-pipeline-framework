@@ -50,10 +50,20 @@ class SecretsAuditLoggerSpec extends AnyFunSpec with Matchers {
       val logger = new InMemorySecretsAuditLogger
 
       val event1 = SecretAccessEvent(
-        Instant.now(), "env", "VAR1", None, false, true
+        Instant.now(),
+        "env",
+        "VAR1",
+        None,
+        false,
+        true
       )
       val event2 = SecretAccessEvent(
-        Instant.now(), "aws", "secret1", Some("key"), true, true
+        Instant.now(),
+        "aws",
+        "secret1",
+        Some("key"),
+        true,
+        true
       )
 
       logger.logAccess(event1)
@@ -69,7 +79,12 @@ class SecretsAuditLoggerSpec extends AnyFunSpec with Matchers {
       val logger = new InMemorySecretsAuditLogger
 
       logger.logAccess(SecretAccessEvent(
-        Instant.now(), "env", "VAR", None, false, true
+        Instant.now(),
+        "env",
+        "VAR",
+        None,
+        false,
+        true
       ))
       logger.getEvents should have size 1
 
@@ -82,7 +97,7 @@ class SecretsAuditLoggerSpec extends AnyFunSpec with Matchers {
 
     it("should create access event from reference") {
       val logger = new InMemorySecretsAuditLogger
-      val ref = SecretsReference("aws", "prod/db", Some("password"), "original")
+      val ref    = SecretsReference("aws", "prod/db", Some("password"), "original")
 
       val event = logger.createAccessEvent(ref, cached = true)
 
@@ -95,8 +110,8 @@ class SecretsAuditLoggerSpec extends AnyFunSpec with Matchers {
 
     it("should create error event from reference and exception") {
       val logger = new InMemorySecretsAuditLogger
-      val ref = SecretsReference("vault", "secret/path", None, "original")
-      val error = new RuntimeException("Connection failed")
+      val ref    = SecretsReference("vault", "secret/path", None, "original")
+      val error  = new RuntimeException("Connection failed")
 
       val event = logger.createErrorEvent(ref, error)
 
@@ -116,7 +131,12 @@ class SecretsAuditLoggerSpec extends AnyFunSpec with Matchers {
 
       noException should be thrownBy {
         logger.logAccess(SecretAccessEvent(
-          Instant.now(), "env", "VAR", None, false, true
+          Instant.now(),
+          "env",
+          "VAR",
+          None,
+          false,
+          true
         ))
       }
     }

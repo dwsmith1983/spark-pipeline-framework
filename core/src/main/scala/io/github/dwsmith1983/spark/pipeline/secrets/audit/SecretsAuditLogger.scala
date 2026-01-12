@@ -89,31 +89,27 @@ class Log4jSecretsAuditLogger extends SecretsAuditLogger {
   private val logger: Logger = LogManager.getLogger("secrets.audit")
 
   override def logAccess(event: SecretAccessEvent): Unit = {
-    val keyPart = event.key.map(k => s"#$k").getOrElse("")
+    val keyPart   = event.key.map(k => s"#$k").getOrElse("")
     val cachePart = if (event.cached) " (cached)" else ""
-    val location = s"${event.provider}://${event.path}$keyPart"
+    val location  = s"${event.provider}://${event.path}$keyPart"
 
     if (event.success) {
       val message = s"Secret accessed: $location at ${event.timestamp}$cachePart"
       logger.info(message)
     } else {
       val errorMsg = event.errorMessage.getOrElse("unknown error")
-      val message = s"Secret access failed: $location at ${event.timestamp} - $errorMsg"
+      val message  = s"Secret access failed: $location at ${event.timestamp} - $errorMsg"
       logger.warn(message)
     }
   }
 }
 
-/**
- * No-op audit logger for testing or when auditing is disabled.
- */
+/** No-op audit logger for testing or when auditing is disabled. */
 object NoOpSecretsAuditLogger extends SecretsAuditLogger {
   override def logAccess(event: SecretAccessEvent): Unit = ()
 }
 
-/**
- * Audit logger that collects events in memory for testing.
- */
+/** Audit logger that collects events in memory for testing. */
 class InMemorySecretsAuditLogger extends SecretsAuditLogger {
   private var events: List[SecretAccessEvent] = List.empty
 

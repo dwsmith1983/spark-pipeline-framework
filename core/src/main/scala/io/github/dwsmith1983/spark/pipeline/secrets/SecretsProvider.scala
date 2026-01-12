@@ -79,11 +79,10 @@ case class SecretResolutionResult(
  */
 class SecretResolutionException(
   val reference: SecretsReference,
-  cause: Throwable
-) extends RuntimeException(
-      s"Failed to resolve secret: ${reference.original}",
-      cause
-    )
+  cause: Throwable) extends RuntimeException(
+    s"Failed to resolve secret: ${reference.original}",
+    cause
+  )
 
 /**
  * Exception thrown when no provider is available for a scheme.
@@ -93,8 +92,7 @@ class SecretResolutionException(
  */
 class NoProviderException(
   val scheme: String,
-  val availableSchemes: Seq[String]
-) extends RuntimeException(
-      s"No secrets provider for scheme '$scheme'. " +
-        s"Available: ${availableSchemes.mkString(", ")}"
-    )
+  val availableSchemes: Seq[String]) extends RuntimeException(
+    s"No secrets provider for scheme '$scheme'. " +
+      s"Available: ${availableSchemes.mkString(", ")}"
+  )

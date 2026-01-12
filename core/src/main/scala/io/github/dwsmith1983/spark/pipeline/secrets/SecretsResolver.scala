@@ -28,8 +28,7 @@ import scala.util.{Failure, Success, Try}
 class SecretsResolver(
   providers: Map[String, SecretsProvider],
   cache: SecretsCache,
-  auditLogger: SecretsAuditLogger
-) {
+  auditLogger: SecretsAuditLogger) {
 
   /**
    * Resolve all secret references in a configuration string.
@@ -54,9 +53,7 @@ class SecretsResolver(
    * @return Success with parsed Config, Failure if resolution or parsing fails
    */
   def resolveAndParse(configString: String): Try[Config] =
-    resolve(configString).flatMap { resolved =>
-      Try(ConfigFactory.parseString(resolved))
-    }
+    resolve(configString).flatMap(resolved => Try(ConfigFactory.parseString(resolved)))
 
   /**
    * Resolve a single secret reference.
@@ -64,7 +61,7 @@ class SecretsResolver(
    * @param ref The secret reference to resolve
    * @return Success with resolved value, Failure if resolution fails
    */
-  def resolveReference(ref: SecretsReference): Try[SecretResolutionResult] = {
+  def resolveReference(ref: SecretsReference): Try[SecretResolutionResult] =
     providers.get(ref.provider) match {
       case None =>
         val error = new NoProviderException(ref.provider, providers.keys.toSeq)
@@ -92,7 +89,6 @@ class SecretsResolver(
             }
         }
     }
-  }
 
   /**
    * Check if all configured providers are available.
@@ -100,8 +96,9 @@ class SecretsResolver(
    * @return Map of provider scheme to availability status
    */
   def checkProviders(): Map[String, Boolean] =
-    providers.map { case (scheme, provider) =>
-      scheme -> provider.isAvailable
+    providers.map {
+      case (scheme, provider) =>
+        scheme -> provider.isAvailable
     }
 
   /**
@@ -111,9 +108,7 @@ class SecretsResolver(
    */
   def availableSchemes: Seq[String] = providers.keys.toSeq.sorted
 
-  /**
-   * Close all providers and clear cache.
-   */
+  /** Close all providers and clear cache. */
   def close(): Unit = {
     providers.values.foreach(_.close())
     cache.invalidateAll()
@@ -136,21 +131,20 @@ class SecretsResolver(
     } else {
       val replacements = resolutions.collect { case Success(pair) => pair }.toMap
       Success(
-        replacements.foldLeft(configString) { case (config, (ref, value)) =>
-          config.replace(ref, value)
+        replacements.foldLeft(configString) {
+          case (config, (ref, value)) =>
+            config.replace(ref, value)
         }
       )
     }
   }
 }
 
-/**
- * Builder for constructing SecretsResolver instances.
- */
+/** Builder for constructing SecretsResolver instances. */
 class SecretsResolverBuilder {
   private var providers: Map[String, SecretsProvider] = Map.empty
-  private var cache: SecretsCache = SecretsCache()
-  private var auditLogger: SecretsAuditLogger = NoOpSecretsAuditLogger
+  private var cache: SecretsCache                     = SecretsCache()
+  private var auditLogger: SecretsAuditLogger         = NoOpSecretsAuditLogger
 
   /**
    * Add a secrets provider.
