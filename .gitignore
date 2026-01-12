@@ -50,3 +50,6 @@ website/.docusaurus/
 website/.cache-loader/
 website/static/api/
 .owasp-data/
+
+# Execution logs
+.logs/
