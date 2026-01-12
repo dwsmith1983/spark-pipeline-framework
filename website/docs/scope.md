@@ -106,15 +106,17 @@ This framework is for **batch processing only**. It does not support:
 - Apache Flink
 - Apache Kafka Streams
 
-### Not a Schema Validation Framework
+### Optional Schema Contracts
 
-Components do not declare or validate their input/output schemas. There is:
+Components can optionally declare input/output schemas via the `SchemaContract` trait. When enabled:
 
-- No compile-time schema checking between components
-- No runtime schema validation
-- No automatic schema evolution handling
+- Runtime validation checks schema compatibility between adjacent components
+- Clear error messages when schemas don't match
+- Validation is disabled by default for backward compatibility
 
-**For schema validation**, combine with:
+See [Schema Contracts](./schema-contracts.md) for details.
+
+**For advanced data quality validation**, combine with:
 - Great Expectations
 - Deequ
 - Custom validation components
@@ -183,15 +185,17 @@ The framework runs a single pipeline to completion. It does not:
 
 The following features are planned for future versions:
 
+### v1.2.0 (Current)
+
+- **Schema contracts**: Optional input/output schema validation between components (see [Schema Contracts](./schema-contracts.md))
+
 ### v2.0 (Planned)
 
-- **Schema contracts**: Optional input/output schema validation between components
 - **Checkpointing**: Resume pipelines from last successful component
 - **Parallel execution**: DAG-based component execution (opt-in)
 
 ### Under Consideration
 
-- Structured Streaming support
 - Built-in data quality hooks
 - Spark UI integration
 - Circuit breaker patterns
@@ -214,6 +218,7 @@ Spark Pipeline Framework is the right choice when you need:
 - Simple, sequential batch pipelines
 - Configuration-driven architecture
 - Production-ready observability
+- Optional schema contracts between components
 - Minimal operational complexity
 
 It is **not** the right choice when you need:
@@ -221,6 +226,5 @@ It is **not** the right choice when you need:
 - Complex DAG workflows
 - Real-time streaming
 - Built-in scheduling
-- Schema validation between components
 
 The framework embraces the Unix philosophy: **do one thing well**. For sequential Spark batch pipelines with configuration-driven flexibility, it provides a clean, production-ready solution.

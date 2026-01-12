@@ -7,6 +7,17 @@ import org.apache.logging.log4j.{LogManager, Logger}
 import pureconfig._
 import pureconfig.generic.auto._
 
+/** Exception thrown when schema validation fails between components. */
+class SchemaContractViolationException(
+  val producerName: String,
+  val consumerName: String,
+  val errors: List[SchemaValidationError],
+  val warnings: List[SchemaValidationWarning])
+  extends RuntimeException(
+    s"Schema contract violation between '$producerName' and '$consumerName': " +
+      errors.map(_.fullMessage).mkString("; ")
+  )
+
 /**
  * Main entry point for running pipelines.
  *
@@ -111,10 +122,20 @@ object SimplePipelineRunner extends PipelineRunner {
         logger.info("Running in continue-on-error mode (failFast=false)")
       }
 
+      // Get schema validation config (disabled by default)
+      val schemaValidationConfig: SchemaValidationConfig =
+        pipelineConfig.schemaValidation.getOrElse(SchemaValidationConfig.Default)
+      if (schemaValidationConfig.enabled) {
+        logger.info(s"Schema validation enabled (strict=${schemaValidationConfig.strict}, failOnWarning=${schemaValidationConfig.failOnWarning})")
+      }
+
       // Invoke beforePipeline hook
       hooks.beforePipeline(pipelineConfig)
 
       val totalComponents: Int = pipelineConfig.pipelineComponents.size
+
+      // Track previous component for schema validation
+      var previousComponent: Option[(PipelineComponent, ComponentConfig)] = None
 
       // Execute each component in sequence
       pipelineConfig.pipelineComponents.zipWithIndex.foreach {
@@ -131,6 +152,17 @@ object SimplePipelineRunner extends PipelineRunner {
 
             val component: PipelineComponent = ComponentInstantiator.instantiate[PipelineComponent](componentConfig)
 
+            // Validate schema contracts between previous and current component
+            if (schemaValidationConfig.enabled) {
+              validateSchemaContracts(
+                previousComponent,
+                Some((component, componentConfig)),
+                schemaValidationConfig,
+                componentNumber,
+                totalComponents
+              )
+            }
+
             logger.info(s"[$componentNumber/$totalComponents] Running: ${componentConfig.instanceName}")
             val startTime: Long = System.currentTimeMillis()
 
@@ -143,6 +175,9 @@ object SimplePipelineRunner extends PipelineRunner {
             hooks.afterComponent(componentConfig, index, totalComponents, duration)
 
             componentsSucceeded += 1
+
+            // Update previous component reference for next iteration
+            previousComponent = Some((component, componentConfig))
           } catch {
             case e: Exception if !pipelineConfig.failFast =>
               // Continue on error mode: record failure and continue
@@ -152,6 +187,8 @@ object SimplePipelineRunner extends PipelineRunner {
               )
               hooks.onComponentFailure(componentConfig, index, e)
               failures += ((componentConfig, e))
+              // Reset previous component on failure to avoid cascading validation errors
+              previousComponent = None
           }
           currentComponentConfig = None
       }
@@ -409,5 +446,94 @@ object SimplePipelineRunner extends PipelineRunner {
   def validateFromFile(configPath: String, options: ValidationOptions): ValidationResult = {
     logger.info(s"[validate] Validating configuration file: $configPath")
     ConfigValidator.validateFromFile(configPath, options)
+  }
+
+  /**
+   * Validates schema contracts between adjacent components.
+   *
+   * @param previous         The previous component (producer), if any
+   * @param current          The current component (consumer), if any
+   * @param config           Schema validation configuration
+   * @param componentNumber  Current component number (for logging)
+   * @param totalComponents  Total number of components (for logging)
+   * @throws SchemaContractViolationException if validation fails
+   */
+  private def validateSchemaContracts(
+    previous: Option[(PipelineComponent, ComponentConfig)],
+    current: Option[(PipelineComponent, ComponentConfig)],
+    config: SchemaValidationConfig,
+    componentNumber: Int,
+    totalComponents: Int
+  ): Unit = {
+    // Extract SchemaContract trait if present
+    val producerContract: Option[SchemaContract] = previous.flatMap {
+      case (comp, _) => comp match {
+          case sc: SchemaContract => Some(sc)
+          case _                  => None
+        }
+    }
+    val consumerContract: Option[SchemaContract] = current.flatMap {
+      case (comp, _) => comp match {
+          case sc: SchemaContract => Some(sc)
+          case _                  => None
+        }
+    }
+
+    val result: SchemaValidationResult =
+      SchemaValidator.validateComponents(producerContract, consumerContract, config)
+
+    result match {
+      case SchemaValidationResult.Skipped =>
+        // No validation needed
+        ()
+
+      case SchemaValidationResult.Valid(warnings) =>
+        // Log warnings
+        warnings.foreach { w =>
+          val producerName = previous.map(_._2.instanceName).getOrElse("(start)")
+          val consumerName = current.map(_._2.instanceName).getOrElse("(end)")
+          logger.warn(
+            s"[$componentNumber/$totalComponents] Schema warning between " +
+              s"'$producerName' and '$consumerName': ${w.fullMessage}"
+          )
+        }
+        // Fail on warning if configured
+        if (config.failOnWarning && warnings.nonEmpty) {
+          val producerName = previous.map(_._2.instanceName).getOrElse("(start)")
+          val consumerName = current.map(_._2.instanceName).getOrElse("(end)")
+          throw new SchemaContractViolationException(
+            producerName,
+            consumerName,
+            warnings.map(w =>
+              SchemaValidationError(
+                SchemaErrorType.Incompatible,
+                w.fullMessage,
+                w.fieldName
+              )
+            ),
+            warnings
+          )
+        }
+
+      case SchemaValidationResult.Invalid(errors, warnings) =>
+        val producerName = previous.map(_._2.instanceName).getOrElse("(start)")
+        val consumerName = current.map(_._2.instanceName).getOrElse("(end)")
+
+        // Log all errors and warnings
+        errors.foreach { e =>
+          logger.error(
+            s"[$componentNumber/$totalComponents] Schema error between " +
+              s"'$producerName' and '$consumerName': ${e.fullMessage}"
+          )
+        }
+        warnings.foreach { w =>
+          logger.warn(
+            s"[$componentNumber/$totalComponents] Schema warning between " +
+              s"'$producerName' and '$consumerName': ${w.fullMessage}"
+          )
+        }
+
+        throw new SchemaContractViolationException(producerName, consumerName, errors, warnings)
+    }
   }
 }
