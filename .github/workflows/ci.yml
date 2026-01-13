@@ -24,7 +24,6 @@ jobs:
               - '**/*.sbt'
               - 'project/**'
               - 'build.sbt'
-              - '.github/workflows/**'
 
   lint:
     name: Lint
