@@ -15,7 +15,7 @@ import java.nio.file.{Files, Path}
 
 /** Tests for streaming sink implementations. */
 class StreamingSinksSpec
-    extends AnyFunSpec
+  extends AnyFunSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach {
@@ -103,7 +103,11 @@ class StreamingSinksSpec
     }
 
     it("should support all file formats") {
-      CloudStorageConfig(path = "s3://b/p", checkpointPath = "/c", format = "parquet").fileFormat shouldBe FileFormat.Parquet
+      CloudStorageConfig(
+        path = "s3://b/p",
+        checkpointPath = "/c",
+        format = "parquet"
+      ).fileFormat shouldBe FileFormat.Parquet
       CloudStorageConfig(path = "s3://b/p", checkpointPath = "/c", format = "json").fileFormat shouldBe FileFormat.Json
       CloudStorageConfig(path = "s3://b/p", checkpointPath = "/c", format = "csv").fileFormat shouldBe FileFormat.Csv
       CloudStorageConfig(path = "s3://b/p", checkpointPath = "/c", format = "avro").fileFormat shouldBe FileFormat.Avro
@@ -384,6 +388,7 @@ class StreamingSinksSpec
 
 /** Test batch processor for ForeachStreamSink tests. */
 class TestBatchProcessor extends StreamBatchProcessor {
+
   override def processBatch(df: DataFrame, batchId: Long): Unit = {
     val _ = (df, batchId) // suppress unused warning
     // No-op for testing
@@ -392,6 +397,7 @@ class TestBatchProcessor extends StreamBatchProcessor {
 
 /** Test row processor for ForeachStreamSink tests. */
 class TestRowProcessor extends StreamRowProcessor {
+
   override def process(row: Row): Unit = {
     val _ = row // suppress unused warning
     // No-op for testing

@@ -32,9 +32,9 @@ package object config {
    * Maps to Spark's OutputMode but as a string for config files.
    */
   object OutputModeConfig {
-    val Append = "append"
+    val Append   = "append"
     val Complete = "complete"
-    val Update = "update"
+    val Update   = "update"
 
     def validate(mode: String): Unit = {
       val valid = Set(Append, Complete, Update)

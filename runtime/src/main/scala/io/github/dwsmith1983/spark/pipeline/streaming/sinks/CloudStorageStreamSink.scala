@@ -71,8 +71,9 @@ class CloudStorageStreamSink(config: CloudStorageConfig) extends StreamingSink {
       .format(format.sparkFormat)
       .option("path", config.path)
 
-    val writerWithOptions = config.options.foldLeft(writer) { case (w, (k, v)) =>
-      w.option(k, v)
+    val writerWithOptions = config.options.foldLeft(writer) {
+      case (w, (k, v)) =>
+        w.option(k, v)
     }
 
     if (config.partitionBy.nonEmpty) {
@@ -89,9 +90,7 @@ class CloudStorageStreamSink(config: CloudStorageConfig) extends StreamingSink {
   override def queryName: Option[String] = config.queryName
 }
 
-/**
- * Factory for creating CloudStorageStreamSink instances from HOCON configuration.
- */
+/** Factory for creating CloudStorageStreamSink instances from HOCON configuration. */
 object CloudStorageStreamSink extends ConfigurableInstance {
 
   override def createFromConfig(conf: com.typesafe.config.Config): CloudStorageStreamSink =

@@ -47,12 +47,12 @@ package io.github.dwsmith1983.spark.pipeline.streaming.config
  * @param producerOptions Additional Kafka producer configuration
  */
 case class KafkaSinkConfig(
-    bootstrapServers: String,
-    topic: String,
-    checkpointPath: String,
-    transactionalId: Option[String] = None,
-    enableIdempotence: Boolean = true,
-    keyColumn: Option[String] = None,
-    valueColumn: Option[String] = None,
-    queryName: Option[String] = None,
-    producerOptions: Map[String, String] = Map.empty)
+  bootstrapServers: String,
+  topic: String,
+  checkpointPath: String,
+  transactionalId: Option[String] = None,
+  enableIdempotence: Boolean = true,
+  keyColumn: Option[String] = None,
+  valueColumn: Option[String] = None,
+  queryName: Option[String] = None,
+  producerOptions: Map[String, String] = Map.empty)

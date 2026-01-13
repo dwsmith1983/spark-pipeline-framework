@@ -58,10 +58,10 @@ import pureconfig.generic.auto._
  * @param queryName Optional name for the streaming query
  */
 class DeltaLakeStreamSink(
-    config: DeltaLakeConfig,
-    checkpointPath: String,
-    override val queryName: Option[String] = None)
-    extends StreamingSink {
+  config: DeltaLakeConfig,
+  checkpointPath: String,
+  override val queryName: Option[String] = None)
+  extends StreamingSink {
 
   config.validateForSink()
 
@@ -90,8 +90,9 @@ class DeltaLakeStreamSink(
       writer
     }
 
-    val writerWithOptions = config.options.foldLeft(writerWithSchema) { case (w, (k, v)) =>
-      w.option(k, v)
+    val writerWithOptions = config.options.foldLeft(writerWithSchema) {
+      case (w, (k, v)) =>
+        w.option(k, v)
     }
 
     if (config.partitionBy.nonEmpty) {
@@ -129,7 +130,7 @@ class DeltaLakeStreamSink(
     }
   }
 
-  private def createOverwriteWriter(df: DataFrame): DataStreamWriter[Row] = {
+  private def createOverwriteWriter(df: DataFrame): DataStreamWriter[Row] =
     df.writeStream.foreachBatch { (batchDf: DataFrame, batchId: Long) =>
       if (!batchDf.isEmpty) {
         logger.debug(s"Processing overwrite batch $batchId")
@@ -153,7 +154,6 @@ class DeltaLakeStreamSink(
       }
       ()
     }
-  }
 
   override def outputMode: OutputMode = config.writeMode match {
     case DeltaWriteMode.Append    => OutputMode.Append()
@@ -174,26 +174,24 @@ class DeltaLakeStreamSink(
  */
 object DeltaLakeStreamSink extends ConfigurableInstance {
 
-  /**
-   * Extended configuration for DeltaLakeStreamSink including checkpoint path.
-   */
+  /** Extended configuration for DeltaLakeStreamSink including checkpoint path. */
   case class SinkConfig(
-      path: String,
-      checkpointPath: String,
-      readChangeDataFeed: Boolean = false,
-      startingVersion: Option[Long] = None,
-      startingTimestamp: Option[String] = None,
-      ignoreChanges: Boolean = false,
-      ignoreDeletes: Boolean = false,
-      maxFilesPerTrigger: Int = 1000,
-      writeMode: String = "append",
-      mergeCondition: Option[String] = None,
-      mergeSchema: Boolean = false,
-      partitionBy: List[String] = List.empty,
-      replaceWhere: Option[String] = None,
-      schemaEvolutionMode: String = "addColumns",
-      options: Map[String, String] = Map.empty,
-      queryName: Option[String] = None)
+    path: String,
+    checkpointPath: String,
+    readChangeDataFeed: Boolean = false,
+    startingVersion: Option[Long] = None,
+    startingTimestamp: Option[String] = None,
+    ignoreChanges: Boolean = false,
+    ignoreDeletes: Boolean = false,
+    maxFilesPerTrigger: Int = 1000,
+    writeMode: String = "append",
+    mergeCondition: Option[String] = None,
+    mergeSchema: Boolean = false,
+    partitionBy: List[String] = List.empty,
+    replaceWhere: Option[String] = None,
+    schemaEvolutionMode: String = "addColumns",
+    options: Map[String, String] = Map.empty,
+    queryName: Option[String] = None)
 
   override def createFromConfig(conf: com.typesafe.config.Config): DeltaLakeStreamSink = {
     val sinkConfig = ConfigSource.fromConfig(conf).loadOrThrow[SinkConfig]

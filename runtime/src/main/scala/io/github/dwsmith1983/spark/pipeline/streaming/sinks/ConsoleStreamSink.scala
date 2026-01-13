@@ -17,11 +17,11 @@ import pureconfig.generic.auto._
  * @param queryName Optional name for the streaming query
  */
 case class ConsoleSinkConfig(
-    checkpointLocation: String,
-    outputMode: String = "append",
-    numRows: Int = 20,
-    truncate: Boolean = true,
-    queryName: Option[String] = None)
+  checkpointLocation: String,
+  outputMode: String = "append",
+  numRows: Int = 20,
+  truncate: Boolean = true,
+  queryName: Option[String] = None)
 
 /**
  * Streaming sink that writes to the console.
@@ -88,9 +88,7 @@ class ConsoleStreamSink(config: ConsoleSinkConfig) extends StreamingSink {
   override def queryName: Option[String] = config.queryName
 }
 
-/**
- * Factory for creating ConsoleStreamSink instances from HOCON configuration.
- */
+/** Factory for creating ConsoleStreamSink instances from HOCON configuration. */
 object ConsoleStreamSink extends ConfigurableInstance {
 
   override def createFromConfig(conf: com.typesafe.config.Config): ConsoleStreamSink =

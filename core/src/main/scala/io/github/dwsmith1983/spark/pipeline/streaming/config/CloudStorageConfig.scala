@@ -11,10 +11,10 @@ sealed trait FileFormat {
 
 object FileFormat {
   case object Parquet extends FileFormat { val sparkFormat = "parquet" }
-  case object Json extends FileFormat { val sparkFormat = "json" }
-  case object Csv extends FileFormat { val sparkFormat = "csv" }
-  case object Avro extends FileFormat { val sparkFormat = "avro" }
-  case object Orc extends FileFormat { val sparkFormat = "orc" }
+  case object Json    extends FileFormat { val sparkFormat = "json"    }
+  case object Csv     extends FileFormat { val sparkFormat = "csv"     }
+  case object Avro    extends FileFormat { val sparkFormat = "avro"    }
+  case object Orc     extends FileFormat { val sparkFormat = "orc"     }
 
   /**
    * Parse a file format from string.
@@ -78,15 +78,13 @@ object FileFormat {
  * @param options Additional format-specific options
  */
 case class CloudStorageConfig(
-    path: String,
-    checkpointPath: String,
-    format: String = "parquet",
-    partitionBy: List[String] = List.empty,
-    queryName: Option[String] = None,
-    options: Map[String, String] = Map.empty) {
+  path: String,
+  checkpointPath: String,
+  format: String = "parquet",
+  partitionBy: List[String] = List.empty,
+  queryName: Option[String] = None,
+  options: Map[String, String] = Map.empty) {
 
-  /**
-   * Get the parsed file format.
-   */
+  /** Get the parsed file format. */
   def fileFormat: FileFormat = FileFormat.fromString(format)
 }

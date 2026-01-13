@@ -77,14 +77,13 @@ class KafkaStreamSink(config: KafkaSinkConfig) extends StreamingSink {
       writer
     }
 
-    config.producerOptions.foldLeft(writerWithTx) { case (w, (k, v)) =>
-      w.option(s"kafka.$k", v)
+    config.producerOptions.foldLeft(writerWithTx) {
+      case (w, (k, v)) =>
+        w.option(s"kafka.$k", v)
     }
   }
 
-  /**
-   * Prepare the DataFrame for Kafka by selecting/creating key and value columns.
-   */
+  /** Prepare the DataFrame for Kafka by selecting/creating key and value columns. */
   private def prepareDataFrame(df: DataFrame): DataFrame = {
     val valueCol = config.valueColumn match {
       case Some(colName) => col(colName).cast("string").as("value")
@@ -106,9 +105,7 @@ class KafkaStreamSink(config: KafkaSinkConfig) extends StreamingSink {
   override def queryName: Option[String] = config.queryName
 }
 
-/**
- * Factory for creating KafkaStreamSink instances from HOCON configuration.
- */
+/** Factory for creating KafkaStreamSink instances from HOCON configuration. */
 object KafkaStreamSink extends ConfigurableInstance {
 
   override def createFromConfig(conf: com.typesafe.config.Config): KafkaStreamSink =

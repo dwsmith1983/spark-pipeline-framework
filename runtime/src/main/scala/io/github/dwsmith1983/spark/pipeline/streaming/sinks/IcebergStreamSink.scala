@@ -63,10 +63,10 @@ import pureconfig.generic.auto._
  * @param queryName Optional name for the streaming query
  */
 class IcebergStreamSink(
-    config: IcebergConfig,
-    checkpointPath: String,
-    override val queryName: Option[String] = None)
-    extends StreamingSink {
+  config: IcebergConfig,
+  checkpointPath: String,
+  override val queryName: Option[String] = None)
+  extends StreamingSink {
 
   config.validateForSink()
 
@@ -78,8 +78,8 @@ class IcebergStreamSink(
     )
 
     config.writeMode match {
-      case IcebergWriteMode.Append          => createAppendWriter(df)
-      case IcebergWriteMode.Upsert          => createUpsertWriter(df)
+      case IcebergWriteMode.Append           => createAppendWriter(df)
+      case IcebergWriteMode.Upsert           => createUpsertWriter(df)
       case IcebergWriteMode.OverwriteDynamic => createOverwriteDynamicWriter(df)
     }
   }
@@ -95,8 +95,9 @@ class IcebergStreamSink(
       writer
     }
 
-    config.options.foldLeft(writerWithFanout) { case (w, (k, v)) =>
-      w.option(k, v)
+    config.options.foldLeft(writerWithFanout) {
+      case (w, (k, v)) =>
+        w.option(k, v)
     }
   }
 
@@ -117,8 +118,9 @@ class IcebergStreamSink(
       writer
     }
 
-    config.options.foldLeft(writerWithFanout) { case (w, (k, v)) =>
-      w.option(k, v)
+    config.options.foldLeft(writerWithFanout) {
+      case (w, (k, v)) =>
+        w.option(k, v)
     }
   }
 
@@ -134,8 +136,9 @@ class IcebergStreamSink(
       writer
     }
 
-    config.options.foldLeft(writerWithFanout) { case (w, (k, v)) =>
-      w.option(k, v)
+    config.options.foldLeft(writerWithFanout) {
+      case (w, (k, v)) =>
+        w.option(k, v)
     }
   }
 
@@ -154,31 +157,29 @@ class IcebergStreamSink(
  */
 object IcebergStreamSink extends ConfigurableInstance {
 
-  /**
-   * Extended configuration for IcebergStreamSink including checkpoint path.
-   */
+  /** Extended configuration for IcebergStreamSink including checkpoint path. */
   case class SinkConfig(
-      tablePath: String,
-      checkpointPath: String,
-      catalogName: String = "spark_catalog",
-      streamFromTimestamp: Option[Long] = None,
-      skipDeleteSnapshots: Boolean = false,
-      skipOverwriteSnapshots: Boolean = false,
-      writeMode: String = "append",
-      upsertKeys: List[String] = List.empty,
-      fanoutEnabled: Boolean = false,
-      partitionBy: List[String] = List.empty,
-      schemaEvolutionMode: String = "addColumns",
-      options: Map[String, String] = Map.empty,
-      queryName: Option[String] = None)
+    tablePath: String,
+    checkpointPath: String,
+    catalogName: String = "spark_catalog",
+    streamFromTimestamp: Option[Long] = None,
+    skipDeleteSnapshots: Boolean = false,
+    skipOverwriteSnapshots: Boolean = false,
+    writeMode: String = "append",
+    upsertKeys: List[String] = List.empty,
+    fanoutEnabled: Boolean = false,
+    partitionBy: List[String] = List.empty,
+    schemaEvolutionMode: String = "addColumns",
+    options: Map[String, String] = Map.empty,
+    queryName: Option[String] = None)
 
   override def createFromConfig(conf: com.typesafe.config.Config): IcebergStreamSink = {
     val sinkConfig = ConfigSource.fromConfig(conf).loadOrThrow[SinkConfig]
 
     val icebergWriteMode = sinkConfig.writeMode.toLowerCase match {
-      case "append"           => IcebergWriteMode.Append
-      case "upsert"           => IcebergWriteMode.Upsert
-      case "overwritedynamic" => IcebergWriteMode.OverwriteDynamic
+      case "append"            => IcebergWriteMode.Append
+      case "upsert"            => IcebergWriteMode.Upsert
+      case "overwritedynamic"  => IcebergWriteMode.OverwriteDynamic
       case "overwrite-dynamic" => IcebergWriteMode.OverwriteDynamic
       case other =>
         throw new IllegalArgumentException(

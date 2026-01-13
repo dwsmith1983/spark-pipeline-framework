@@ -97,14 +97,12 @@ object ForeachMode {
  * @param processorConfig Configuration to pass to the processor
  */
 case class ForeachSinkConfig(
-    processorClass: String,
-    checkpointPath: String,
-    mode: String = "batch",
-    queryName: Option[String] = None,
-    processorConfig: Map[String, String] = Map.empty) {
+  processorClass: String,
+  checkpointPath: String,
+  mode: String = "batch",
+  queryName: Option[String] = None,
+  processorConfig: Map[String, String] = Map.empty) {
 
-  /**
-   * Get the parsed foreach mode.
-   */
+  /** Get the parsed foreach mode. */
   def foreachMode: ForeachMode = ForeachMode.fromString(mode)
 }

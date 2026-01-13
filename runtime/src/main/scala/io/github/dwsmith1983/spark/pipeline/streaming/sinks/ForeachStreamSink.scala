@@ -156,9 +156,7 @@ class ForeachStreamSink(config: ForeachSinkConfig) extends StreamingSink {
     config.foreachMode match {
       case ForeachMode.Batch =>
         val processor = instantiateBatchProcessor()
-        df.writeStream.foreachBatch { (batchDf: DataFrame, batchId: Long) =>
-          processor.processBatch(batchDf, batchId)
-        }
+        df.writeStream.foreachBatch((batchDf: DataFrame, batchId: Long) => processor.processBatch(batchDf, batchId))
 
       case ForeachMode.Row =>
         val processor = instantiateRowProcessor()
@@ -175,24 +173,23 @@ class ForeachStreamSink(config: ForeachSinkConfig) extends StreamingSink {
     }
   }
 
-  private def instantiateBatchProcessor(): StreamBatchProcessor = {
+  private def instantiateBatchProcessor(): StreamBatchProcessor =
     instantiateProcessor[StreamBatchProcessor](config.processorClass)
-  }
 
-  private def instantiateRowProcessor(): StreamRowProcessor = {
+  private def instantiateRowProcessor(): StreamRowProcessor =
     instantiateProcessor[StreamRowProcessor](config.processorClass)
-  }
 
   private def instantiateProcessor[T](className: String): T = {
     val clazz = Class.forName(className)
 
-    val instance = try {
-      val configConstructor = clazz.getConstructor(classOf[Map[_, _]])
-      configConstructor.newInstance(config.processorConfig)
-    } catch {
-      case _: NoSuchMethodException =>
-        clazz.getDeclaredConstructor().newInstance()
-    }
+    val instance =
+      try {
+        val configConstructor = clazz.getConstructor(classOf[Map[_, _]])
+        configConstructor.newInstance(config.processorConfig)
+      } catch {
+        case _: NoSuchMethodException =>
+          clazz.getDeclaredConstructor().newInstance()
+      }
 
     instance.asInstanceOf[T]
   }
@@ -204,9 +201,7 @@ class ForeachStreamSink(config: ForeachSinkConfig) extends StreamingSink {
   override def queryName: Option[String] = config.queryName
 }
 
-/**
- * Factory for creating ForeachStreamSink instances from HOCON configuration.
- */
+/** Factory for creating ForeachStreamSink instances from HOCON configuration. */
 object ForeachStreamSink extends ConfigurableInstance {
 
   override def createFromConfig(conf: com.typesafe.config.Config): ForeachStreamSink =
