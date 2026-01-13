@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.3.1...v1.3.2) (2026-01-13)
+
+
+### Bug Fixes
+
+* use [@note](https://github.com/note) for [@throws](https://github.com/throws) annotations for Scala 2.12 compatibility ([#91](https://github.com/dwsmith1983/spark-pipeline-framework/issues/91)) ([92d5888](https://github.com/dwsmith1983/spark-pipeline-framework/commit/92d58881610032ad3dd260f41f124fbfb5aba7ec))
+
 ## [1.3.0](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.2.0...v1.3.0) (2026-01-13)
 
 
