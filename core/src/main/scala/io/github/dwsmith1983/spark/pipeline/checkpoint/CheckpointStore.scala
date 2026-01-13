@@ -35,7 +35,7 @@ trait CheckpointStore {
    * If a checkpoint with the same runId exists, it will be overwritten.
    *
    * @param state The checkpoint state to save
-   * @throws CheckpointException if the save operation fails
+   * @note Throws `CheckpointException` if the save operation fails
    */
   def save(state: CheckpointState): Unit
 

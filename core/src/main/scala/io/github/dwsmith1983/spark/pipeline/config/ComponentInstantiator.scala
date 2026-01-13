@@ -22,7 +22,7 @@ object ComponentInstantiator {
    * @param componentConfig The component configuration containing type and config
    * @tparam T The expected type of the component
    * @return The instantiated component
-   * @throws ComponentInstantiationException if instantiation fails
+   * @note Throws `ComponentInstantiationException` if instantiation fails
    */
   def instantiate[T](componentConfig: ComponentConfig): T = {
     val className: String = componentConfig.instanceType
