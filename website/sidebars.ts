@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
     'schema-contracts',
     'components',
     'hooks',
+    'data-quality',
     'streaming',
     'deployment',
     'contributing',
