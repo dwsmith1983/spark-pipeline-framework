@@ -93,7 +93,7 @@ final case class KafkaSourceConfig(
   /**
    * Validates the configuration.
    *
-   * @throws java.lang.IllegalArgumentException if configuration is invalid
+   * @note Throws `IllegalArgumentException` if configuration is invalid
    */
   def validate(): Unit = {
     require(bootstrapServers.nonEmpty, "bootstrapServers cannot be empty")
