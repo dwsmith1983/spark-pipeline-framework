@@ -8,6 +8,8 @@ import org.apache.logging.log4j.{LogManager, Logger}
 import pureconfig._
 import pureconfig.generic.auto._
 
+import scala.collection.mutable
+
 /** Exception thrown when schema validation fails between components. */
 class SchemaContractViolationException(
   val producerName: String,
@@ -138,43 +140,37 @@ object SimplePipelineRunner extends PipelineRunner {
       // Track previous component for schema validation
       var previousComponent: Option[(PipelineComponent, ComponentConfig)] = None
 
+      // Initialize circuit breakers if configured
+      val circuitBreakers: mutable.Map[String, CircuitBreaker] = mutable.Map.empty
+
+      def getOrCreateCircuitBreaker(componentName: String): Option[CircuitBreaker] =
+        pipelineConfig.circuitBreaker.map { cbConfig =>
+          circuitBreakers.getOrElseUpdate(componentName, new CircuitBreaker(componentName, cbConfig))
+        }
+
       // Execute each component in sequence
       pipelineConfig.pipelineComponents.zipWithIndex.foreach {
         case (componentConfig: ComponentConfig, index: Int) =>
           currentComponentConfig = Some(componentConfig)
           val componentNumber: Int = index + 1
 
+          // Determine retry policy: component-specific > pipeline-level > no retry
+          val retryPolicy: Option[RetryPolicy] =
+            componentConfig.retryPolicy.orElse(pipelineConfig.retryPolicy)
+
+          val circuitBreaker: Option[CircuitBreaker] = getOrCreateCircuitBreaker(componentConfig.instanceName)
+
           try {
-            // Invoke beforeComponent hook
-            hooks.beforeComponent(componentConfig, index, totalComponents)
-
-            logger.info(s"[$componentNumber/$totalComponents] Instantiating: ${componentConfig.instanceName}")
-            logger.debug(s"Instance type: ${componentConfig.instanceType}")
-
-            val component: PipelineComponent = ComponentInstantiator.instantiate[PipelineComponent](componentConfig)
-
-            // Validate schema contracts between previous and current component
-            if (schemaValidationConfig.enabled) {
-              validateSchemaContracts(
-                previousComponent,
-                Some((component, componentConfig)),
-                schemaValidationConfig,
-                componentNumber,
-                totalComponents
-              )
-            }
-
-            logger.info(s"[$componentNumber/$totalComponents] Running: ${componentConfig.instanceName}")
-            val startTime: Long = System.currentTimeMillis()
-
-            component.run()
-
-            val duration: Long = System.currentTimeMillis() - startTime
-            logger.info(s"[$componentNumber/$totalComponents] Completed: ${componentConfig.instanceName} (${duration}ms)")
-
-            // Invoke afterComponent hook
-            hooks.afterComponent(componentConfig, index, totalComponents, duration)
-
+            val component: PipelineComponent = executeComponentWithRetry(
+              componentConfig,
+              index,
+              totalComponents,
+              retryPolicy,
+              circuitBreaker,
+              hooks,
+              schemaValidationConfig,
+              previousComponent
+            )
             componentsSucceeded += 1
 
             // Update previous component reference for next iteration
@@ -238,6 +234,125 @@ object SimplePipelineRunner extends PipelineRunner {
     }
     // Note: We don't stop SparkSession here as it may be managed externally
     // or reused. The session will be stopped when the JVM exits.
+  }
+
+  /**
+   * Executes a component with retry logic and optional circuit breaker protection.
+   *
+   * @param componentConfig The component configuration
+   * @param index Zero-based index of the component
+   * @param totalComponents Total number of components in the pipeline
+   * @param retryPolicy Optional retry policy for this component
+   * @param circuitBreaker Optional circuit breaker for this component
+   * @param hooks Pipeline hooks for observability
+   * @param schemaValidationConfig Schema validation configuration
+   * @param previousComponent Previous component for schema validation
+   * @return The executed component (for schema validation tracking)
+   */
+  private def executeComponentWithRetry(
+    componentConfig: ComponentConfig,
+    index: Int,
+    totalComponents: Int,
+    retryPolicy: Option[RetryPolicy],
+    circuitBreaker: Option[CircuitBreaker],
+    hooks: PipelineHooks,
+    schemaValidationConfig: SchemaValidationConfig,
+    previousComponent: Option[(PipelineComponent, ComponentConfig)]
+  ): PipelineComponent = {
+    val componentNumber: Int                 = index + 1
+    val maxRetries: Int                      = retryPolicy.map(_.maxRetries).getOrElse(0)
+    var executedComponent: PipelineComponent = null
+
+    def executeOnce(): PipelineComponent = {
+      // Check circuit breaker
+      circuitBreaker.foreach { cb =>
+        if (!cb.canExecute()) {
+          throw new CircuitBreakerOpenException(componentConfig.instanceName, cb.currentState)
+        }
+      }
+
+      // Invoke beforeComponent hook
+      hooks.beforeComponent(componentConfig, index, totalComponents)
+
+      logger.info(s"[$componentNumber/$totalComponents] Instantiating: ${componentConfig.instanceName}")
+      logger.debug(s"Instance type: ${componentConfig.instanceType}")
+
+      val component: PipelineComponent = ComponentInstantiator.instantiate[PipelineComponent](componentConfig)
+
+      // Validate schema contracts between previous and current component
+      if (schemaValidationConfig.enabled) {
+        validateSchemaContracts(
+          previousComponent,
+          Some((component, componentConfig)),
+          schemaValidationConfig,
+          componentNumber,
+          totalComponents
+        )
+      }
+
+      logger.info(s"[$componentNumber/$totalComponents] Running: ${componentConfig.instanceName}")
+      val startTime: Long = System.currentTimeMillis()
+
+      component.run()
+
+      val duration: Long = System.currentTimeMillis() - startTime
+      logger.info(s"[$componentNumber/$totalComponents] Completed: ${componentConfig.instanceName} (${duration}ms)")
+
+      // Record success with circuit breaker
+      circuitBreaker.foreach(_.recordSuccess())
+
+      // Invoke afterComponent hook
+      hooks.afterComponent(componentConfig, index, totalComponents, duration)
+
+      component
+    }
+
+    var attempt: Int       = 0
+    var succeeded: Boolean = false
+
+    while (!succeeded && attempt <= maxRetries) {
+      try {
+        executedComponent = executeOnce()
+        succeeded = true
+      } catch {
+        case e: CircuitBreakerOpenException =>
+          // Don't retry circuit breaker open - propagate immediately
+          throw e
+        case e: Exception =>
+          // Record failure with circuit breaker
+          circuitBreaker.foreach(_.recordFailure())
+
+          val canRetry: Boolean = attempt < maxRetries &&
+            retryPolicy.exists(p => RetryPolicy.isRetryable(p, e))
+
+          if (canRetry) {
+            val policy: RetryPolicy = retryPolicy.get
+            val delayMs: Long       = RetryPolicy.calculateDelay(policy, attempt)
+            val nextAttempt: Int    = attempt + 1
+
+            logger.warn(
+              s"[$componentNumber/$totalComponents] Component '${componentConfig.instanceName}' failed " +
+                s"(attempt $nextAttempt/${maxRetries + 1}): ${e.getMessage}. Retrying in ${delayMs}ms..."
+            )
+
+            // Invoke retry hook
+            hooks.onRetryAttempt(componentConfig, nextAttempt, maxRetries, delayMs, e)
+
+            Thread.sleep(delayMs)
+            attempt += 1
+          } else {
+            // No more retries - propagate the exception
+            // Note: onComponentFailure is called by the caller, not here
+            logger.error(
+              s"[$componentNumber/$totalComponents] Component '${componentConfig.instanceName}' failed " +
+                s"after ${attempt + 1} attempt(s): ${e.getMessage}"
+            )
+            throw e
+          }
+      }
+    }
+
+    executedComponent
   }
 
   /**

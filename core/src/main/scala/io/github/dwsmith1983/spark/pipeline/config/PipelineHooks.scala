@@ -101,6 +101,46 @@ trait PipelineHooks {
   def onComponentFailure(config: ComponentConfig, index: Int, error: Throwable): Unit = {
     val _ = (config, index, error) // suppress unused warning - meant to be overridden
   }
+
+  /**
+   * Called before a retry attempt for a failed component.
+   *
+   * This hook is called after a component fails but before the retry delay.
+   * It provides visibility into retry behavior for logging and metrics.
+   *
+   * @param config The component configuration being retried
+   * @param attempt Current retry attempt number (1-indexed, so first retry is attempt 1)
+   * @param maxAttempts Maximum number of retry attempts configured
+   * @param delayMs Delay in milliseconds before the retry will be executed
+   * @param error The exception that triggered the retry
+   */
+  def onRetryAttempt(
+    config: ComponentConfig,
+    attempt: Int,
+    maxAttempts: Int,
+    delayMs: Long,
+    error: Throwable
+  ): Unit = {
+    val _ = (config, attempt, maxAttempts, delayMs, error) // suppress unused warning - meant to be overridden
+  }
+
+  /**
+   * Called when a circuit breaker changes state.
+   *
+   * This hook provides visibility into circuit breaker state transitions
+   * for monitoring and alerting purposes.
+   *
+   * @param componentName Name of the component whose circuit breaker changed
+   * @param oldState Previous circuit state
+   * @param newState New circuit state
+   */
+  def onCircuitBreakerStateChange(
+    componentName: String,
+    oldState: CircuitState,
+    newState: CircuitState
+  ): Unit = {
+    val _ = (componentName, oldState, newState) // suppress unused warning - meant to be overridden
+  }
 }
 
 object PipelineHooks {
@@ -156,5 +196,21 @@ object PipelineHooks {
 
     override def onComponentFailure(config: ComponentConfig, index: Int, error: Throwable): Unit =
       safeCall("onComponentFailure")(_.onComponentFailure(config, index, error))
+
+    override def onRetryAttempt(
+      config: ComponentConfig,
+      attempt: Int,
+      maxAttempts: Int,
+      delayMs: Long,
+      error: Throwable
+    ): Unit =
+      safeCall("onRetryAttempt")(_.onRetryAttempt(config, attempt, maxAttempts, delayMs, error))
+
+    override def onCircuitBreakerStateChange(
+      componentName: String,
+      oldState: CircuitState,
+      newState: CircuitState
+    ): Unit =
+      safeCall("onCircuitBreakerStateChange")(_.onCircuitBreakerStateChange(componentName, oldState, newState))
   }
 }
