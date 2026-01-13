@@ -55,7 +55,7 @@ import pureconfig.generic.auto._
  *
  * @param config Iceberg configuration
  *
- * @see [[io.github.dwsmith1983.spark.pipeline.streaming.config.IcebergConfig]] for configuration options
+ * @see `io.github.dwsmith1983.spark.pipeline.streaming.config.IcebergConfig` for configuration options
  * @see [[https://iceberg.apache.org/docs/latest/spark-structured-streaming/ Iceberg Streaming Guide]]
  */
 class IcebergStreamingSource(config: IcebergConfig) extends StreamingSource {

@@ -19,7 +19,7 @@ import pureconfig.generic.auto._
  * val config = EventHubsSourceConfig(
  *   connectionString = "Endpoint=sb://mynamespace.servicebus.windows.net/;SharedAccessKeyName=...",
  *   eventHubName = "my-hub",
- *   consumerGroup = "$Default"
+ *   consumerGroup = "$$Default"
  * )
  * val source = new EventHubsStreamingSource(config)
  * val df = source.readStream()
@@ -199,7 +199,7 @@ final case class EventHubsSourceConfig(
  *   instance-config {
  *     event-hub-name = "my-hub"
  *     connection-string = "Endpoint=sb://..."
- *     consumer-group = "$Default"
+ *     consumer-group = "$$Default"
  *     starting-position = "latest"
  *     max-events-per-trigger = 10000
  *   }
@@ -215,7 +215,7 @@ final case class EventHubsSourceConfig(
  *     event-hub-name = "my-hub"
  *     fully-qualified-namespace = "mynamespace.servicebus.windows.net"
  *     use-managed-identity = true
- *     consumer-group = "$Default"
+ *     consumer-group = "$$Default"
  *   }
  * }
  * }}}
