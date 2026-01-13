@@ -3,7 +3,7 @@ package io.github.dwsmith1983.spark.pipeline.streaming.config
 /**
  * Configuration for Delta Lake streaming sources and sinks.
  *
- * This configuration is shared between [[io.github.dwsmith1983.spark.pipeline.streaming.sources.delta.DeltaStreamingSource]]
+ * This configuration is shared between Delta streaming sources
  * and Delta streaming sinks. It supports both reading (with Change Data Feed)
  * and writing (with merge, append, overwrite modes).
  *
@@ -87,7 +87,7 @@ final case class DeltaLakeConfig(
   /**
    * Validates the configuration for use as a streaming source.
    *
-   * @throws IllegalArgumentException if startingVersion and startingTimestamp are both set
+   * Throws IllegalArgumentException if startingVersion and startingTimestamp are both set.
    */
   def validateForSource(): Unit =
     require(
@@ -98,7 +98,7 @@ final case class DeltaLakeConfig(
   /**
    * Validates the configuration for use as a streaming sink.
    *
-   * @throws IllegalArgumentException if merge mode is used without mergeCondition
+   * Throws IllegalArgumentException if merge mode is used without mergeCondition.
    */
   def validateForSink(): Unit =
     writeMode match {
