@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.1.0...v1.2.0) (2026-01-13)
+
+
+### Features
+
+* v1.2.0 release - Schema contracts, DQ hooks, Checkpointing, Retry logic ([#77](https://github.com/dwsmith1983/spark-pipeline-framework/issues/77)) ([d220017](https://github.com/dwsmith1983/spark-pipeline-framework/commit/d2200171aaffa86b1dd6db44ff4caa9800298f7e))
+
 ## [1.1.0](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.0.1...v1.1.0) (2026-01-12)
 
 
