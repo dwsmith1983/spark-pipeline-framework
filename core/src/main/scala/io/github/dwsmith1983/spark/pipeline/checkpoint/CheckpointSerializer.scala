@@ -40,7 +40,7 @@ object CheckpointSerializer {
    *
    * @param json The JSON string to parse
    * @return Parsed checkpoint state
-   * @throws CheckpointException if parsing fails
+   * @note Throws `CheckpointException` if parsing fails
    */
   def fromJson(json: String): CheckpointState =
     Try {

@@ -572,7 +572,7 @@ object SimplePipelineRunner extends PipelineRunner {
    * @param config           Schema validation configuration
    * @param componentNumber  Current component number (for logging)
    * @param totalComponents  Total number of components (for logging)
-   * @throws SchemaContractViolationException if validation fails
+   * @note Throws `SchemaContractViolationException` if validation fails
    */
   private def validateSchemaContracts(
     previous: Option[(PipelineComponent, ComponentConfig)],
