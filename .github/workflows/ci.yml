@@ -55,6 +55,29 @@ jobs:
       - name: Check semantic rules (scalafix)
         run: sbt "scalafixAll --check"
 
+  docs:
+    name: Validate ScalaDoc
+    runs-on: ubuntu-latest
+    needs: changes
+    # Skip for release-please PRs and docs-only changes
+    if: ${{ !startsWith(github.head_ref, 'release-please') && needs.changes.outputs.code == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Generate ScalaDoc
+        run: sbt "core/doc" "runtimespark3/doc" "runnerspark3/doc"
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -118,12 +141,25 @@ jobs:
           path: .owasp-data
           key: owasp-nvd-v1
 
-  test-spark3:
-    name: Test (Spark 3 / Scala 2.12)
+  test:
+    name: Test (${{ matrix.name }})
     runs-on: ubuntu-latest
-    needs: [lint, changes]
+    needs: [lint, docs]
     # Skip for release-please PRs and docs-only changes
     if: ${{ !startsWith(github.head_ref, 'release-please') && needs.changes.outputs.code == 'true' }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: Spark 3 / Scala 2.12
+            test-cmd: sbt coverage "project core2_12" test "project runtimespark32_12" test "project runnerspark32_12" test "project examplespark32_12" test coverageReport
+            coverage-cmd: sbt "project core2_12" coverageAggregate
+          - name: Spark 3 / Scala 2.13
+            test-cmd: sbt coverage "project core" test "project runtimespark3" test "project runnerspark3" test "project examplespark3" test coverageReport
+            coverage-cmd: sbt "project core" coverageAggregate
+          - name: Spark 4 / Scala 2.13
+            test-cmd: sbt coverage "project core" test "project runtimespark4" test "project runnerspark4" test "project examplespark4" test coverageReport
+            coverage-cmd: sbt "project core" coverageAggregate
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -139,59 +175,7 @@ jobs:
         uses: sbt/setup-sbt@v1
 
       - name: Run tests with coverage
-        run: sbt coverage "project core2_12" test "project runtimespark32_12" test "project runnerspark32_12" test "project examplespark32_12" test coverageReport
+        run: ${{ matrix.test-cmd }}
 
       - name: Check coverage minimum
-        run: sbt "project core2_12" coverageAggregate
-
-  test-spark3-scala213:
-    name: Test (Spark 3 / Scala 2.13)
-    runs-on: ubuntu-latest
-    needs: [lint, changes]
-    # Skip for release-please PRs and docs-only changes
-    if: ${{ !startsWith(github.head_ref, 'release-please') && needs.changes.outputs.code == 'true' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: zulu
-          java-version: 17
-          cache: sbt
-
-      - name: Setup sbt
-        uses: sbt/setup-sbt@v1
-
-      - name: Run tests with coverage
-        run: sbt coverage "project core" test "project runtimespark3" test "project runnerspark3" test "project examplespark3" test coverageReport
-
-      - name: Check coverage minimum
-        run: sbt "project core" coverageAggregate
-
-  test-spark4:
-    name: Test (Spark 4 / Scala 2.13)
-    runs-on: ubuntu-latest
-    needs: [lint, changes]
-    # Skip for release-please PRs and docs-only changes
-    if: ${{ !startsWith(github.head_ref, 'release-please') && needs.changes.outputs.code == 'true' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: zulu
-          java-version: 17
-          cache: sbt
-
-      - name: Setup sbt
-        uses: sbt/setup-sbt@v1
-
-      - name: Run tests with coverage
-        run: sbt coverage "project core" test "project runtimespark4" test "project runnerspark4" test "project examplespark4" test coverageReport
-
-      - name: Check coverage minimum
-        run: sbt "project core" coverageAggregate
+        run: ${{ matrix.coverage-cmd }}
