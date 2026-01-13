@@ -3,7 +3,7 @@ package io.github.dwsmith1983.spark.pipeline.streaming.config
 /**
  * Configuration for Apache Iceberg streaming sources and sinks.
  *
- * This configuration is shared between [[io.github.dwsmith1983.spark.pipeline.streaming.sources.iceberg.IcebergStreamingSource]]
+ * This configuration is shared between Iceberg streaming sources
  * and Iceberg streaming sinks. It supports both incremental reads (streaming from
  * snapshots) and various write modes (append, upsert, overwrite).
  *
@@ -107,7 +107,7 @@ final case class IcebergConfig(
   /**
    * Validates the configuration for use as a streaming sink.
    *
-   * @throws IllegalArgumentException if upsert mode is used without upsertKeys
+   * Throws IllegalArgumentException if upsert mode is used without upsertKeys.
    */
   def validateForSink(): Unit =
     writeMode match {
