@@ -59,7 +59,7 @@ import pureconfig.generic.auto._
  *
  * @param config Delta Lake configuration
  *
- * @see [[io.github.dwsmith1983.spark.pipeline.streaming.config.DeltaLakeConfig]] for configuration options
+ * @see `io.github.dwsmith1983.spark.pipeline.streaming.config.DeltaLakeConfig` for configuration options
  * @see [[https://docs.delta.io/latest/delta-streaming.html Delta Streaming Guide]]
  */
 class DeltaStreamingSource(config: DeltaLakeConfig) extends StreamingSource {
