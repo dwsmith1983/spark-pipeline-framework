@@ -15,6 +15,11 @@ import com.typesafe.config.Config
  * pipeline {
  *   pipeline-name = "My Data Pipeline"
  *   fail-fast = true  # Optional, defaults to true
+ *   schema-validation {  # Optional
+ *     enabled = true
+ *     strict = false
+ *     fail-on-warning = false
+ *   }
  *   pipeline-components = [...]
  * }
  * }}}
@@ -23,11 +28,14 @@ import com.typesafe.config.Config
  * @param pipelineComponents List of components to execute in order
  * @param failFast If true (default), stop on first component failure.
  *                 If false, continue executing remaining components and report all failures.
+ * @param schemaValidation Optional schema validation configuration. When enabled,
+ *                         the runner validates schema contracts between adjacent components.
  */
 case class PipelineConfig(
   pipelineName: String,
   pipelineComponents: List[ComponentConfig],
-  failFast: Boolean = true)
+  failFast: Boolean = true,
+  schemaValidation: Option[SchemaValidationConfig] = None)
 
 /**
  * Configuration for a single pipeline component.

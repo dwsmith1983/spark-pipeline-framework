@@ -7,6 +7,7 @@ const sidebars: SidebarsConfig = {
     'configuration',
     'config-validation',
     'secrets-management',
+    'schema-contracts',
     'components',
     'hooks',
     'streaming',
