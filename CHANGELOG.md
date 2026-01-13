@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.2.0...v1.3.0) (2026-01-13)
+
+
+### Features
+
+* v1.3.0 - Structured Streaming Sources and Sinks ([#82](https://github.com/dwsmith1983/spark-pipeline-framework/issues/82)) ([cf93ace](https://github.com/dwsmith1983/spark-pipeline-framework/commit/cf93acecba6b817ed18edb2abead84f72cd47817))
+
 ## [1.2.0](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.1.0...v1.2.0) (2026-01-13)
 
 
