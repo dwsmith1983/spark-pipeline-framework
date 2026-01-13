@@ -1,6 +1,7 @@
 package io.github.dwsmith1983.spark.pipeline.config
 
 import com.typesafe.config.Config
+import io.github.dwsmith1983.spark.pipeline.checkpoint.CheckpointConfig
 
 /**
  * Configuration models for the pipeline framework.
@@ -20,6 +21,15 @@ import com.typesafe.config.Config
  *     strict = false
  *     fail-on-warning = false
  *   }
+ *
+ *   # Optional checkpoint configuration for resume support
+ *   checkpoint {
+ *     enabled = true
+ *     location = "/tmp/spark-checkpoints"
+ *     auto-resume = false
+ *     cleanup-on-success = true
+ *   }
+ *
  *   pipeline-components = [...]
  * }
  * }}}
@@ -30,12 +40,14 @@ import com.typesafe.config.Config
  *                 If false, continue executing remaining components and report all failures.
  * @param schemaValidation Optional schema validation configuration. When enabled,
  *                         the runner validates schema contracts between adjacent components.
+ * @param checkpoint Optional checkpoint configuration for resume functionality
  */
 case class PipelineConfig(
   pipelineName: String,
   pipelineComponents: List[ComponentConfig],
   failFast: Boolean = true,
-  schemaValidation: Option[SchemaValidationConfig] = None)
+  schemaValidation: Option[SchemaValidationConfig] = None,
+  checkpoint: Option[CheckpointConfig] = None)
 
 /**
  * Configuration for a single pipeline component.

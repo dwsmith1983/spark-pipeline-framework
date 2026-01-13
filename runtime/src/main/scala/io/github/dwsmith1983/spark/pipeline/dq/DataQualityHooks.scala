@@ -78,7 +78,7 @@ class DataQualityHooks(
   val sink: DataQualitySink = DataQualitySink.logging())
   extends PipelineHooks {
 
-  private val logger: Logger                                = LogManager.getLogger(classOf[DataQualityHooks])
+  private val logger: Logger                                 = LogManager.getLogger(classOf[DataQualityHooks])
   private val results: mutable.ListBuffer[DataQualityResult] = mutable.ListBuffer()
   private val failedChecks: mutable.ListBuffer[DataQualityResult.Failed] = mutable.ListBuffer()
 
@@ -88,14 +88,10 @@ class DataQualityHooks(
    */
   def getResults: Seq[DataQualityResult] = results.toSeq
 
-  /**
-   * Gets all failed check results.
-   */
+  /** Gets all failed check results. */
   def getFailedResults: Seq[DataQualityResult.Failed] = failedChecks.toSeq
 
-  /**
-   * Returns true if all checks passed (no failures).
-   */
+  /** Returns true if all checks passed (no failures). */
   def allChecksPassed: Boolean = failedChecks.isEmpty
 
   override def beforePipeline(config: PipelineConfig): Unit = {

@@ -126,8 +126,9 @@ object SchemaDefinition {
    * }}}
    */
   def of(fields: (String, String, Boolean)*): SchemaDefinition =
-    SchemaDefinition(fields.map { case (name, dataType, nullable) =>
-      SchemaField(name, dataType, nullable)
+    SchemaDefinition(fields.map {
+      case (name, dataType, nullable) =>
+        SchemaField(name, dataType, nullable)
     })
 }
 
@@ -195,9 +196,7 @@ object SchemaValidationConfig {
     SchemaValidationConfig(enabled = true, strict = true, failOnWarning = true)
 }
 
-/**
- * Result of schema validation between two components.
- */
+/** Result of schema validation between two components. */
 sealed trait SchemaValidationResult {
 
   /** Whether the validation passed without errors. */
@@ -223,7 +222,7 @@ object SchemaValidationResult {
   final case class Valid(warnings: List[SchemaValidationWarning] = List.empty)
     extends SchemaValidationResult {
 
-    override def isValid: Boolean                         = true
+    override def isValid: Boolean                    = true
     override def errors: List[SchemaValidationError] = List.empty
   }
 
@@ -243,8 +242,8 @@ object SchemaValidationResult {
 
   /** Validation skipped because contracts were not declared. */
   case object Skipped extends SchemaValidationResult {
-    override def isValid: Boolean                           = true
-    override def errors: List[SchemaValidationError]   = List.empty
+    override def isValid: Boolean                        = true
+    override def errors: List[SchemaValidationError]     = List.empty
     override def warnings: List[SchemaValidationWarning] = List.empty
   }
 
@@ -350,9 +349,7 @@ object SchemaWarningType {
   }
 }
 
-/**
- * Validates schema compatibility between adjacent components.
- */
+/** Validates schema compatibility between adjacent components. */
 object SchemaValidator {
 
   /**

@@ -12,14 +12,12 @@ import pureconfig.generic.auto._
 
 import scala.collection.mutable
 
-/**
- * Integration tests for schema contract validation in SimplePipelineRunner.
- */
+/** Integration tests for schema contract validation in SimplePipelineRunner. */
 class SchemaValidationIntegrationSpec
   extends AnyFunSpec
-  with Matchers
-  with BeforeAndAfterEach
-  with BeforeAndAfterAll {
+    with Matchers
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll {
 
   override def beforeEach(): Unit = {
     SparkSessionWrapper.stop()
@@ -61,7 +59,7 @@ class SchemaValidationIntegrationSpec
           SimplePipelineRunner.run(config)
         }
 
-        SchemaTestTracker.executed should contain allOf ("producer-1", "consumer-1")
+        (SchemaTestTracker.executed should contain).allOf("producer-1", "consumer-1")
       }
     }
 
@@ -98,7 +96,7 @@ class SchemaValidationIntegrationSpec
           SimplePipelineRunner.run(config)
         }
 
-        SchemaTestTracker.executed should contain allOf ("producer-2", "consumer-2")
+        (SchemaTestTracker.executed should contain).allOf("producer-2", "consumer-2")
       }
 
       it("should fail validation when schemas are incompatible") {
@@ -173,7 +171,7 @@ class SchemaValidationIntegrationSpec
           SimplePipelineRunner.run(config)
         }
 
-        SchemaTestTracker.executed should contain allOf ("producer-4", "no-schema-4")
+        (SchemaTestTracker.executed should contain).allOf("producer-4", "no-schema-4")
       }
     }
 
@@ -319,11 +317,13 @@ object SchemaTestTracker {
 case class SchemaProducerConfig(id: String)
 
 object SchemaProducerComponent extends ConfigurableInstance {
+
   override def createFromConfig(conf: Config): SchemaProducerComponent =
     new SchemaProducerComponent(ConfigSource.fromConfig(conf).loadOrThrow[SchemaProducerConfig])
 }
 
 class SchemaProducerComponent(conf: SchemaProducerConfig) extends DataFlow with SchemaContract {
+
   override def outputContract: Option[SchemaDefinition] = Some(
     SchemaDefinition(Seq(
       SchemaField("id", "long", nullable = false),
@@ -342,11 +342,13 @@ class SchemaProducerComponent(conf: SchemaProducerConfig) extends DataFlow with 
 case class SchemaConsumerConfig(id: String)
 
 object SchemaConsumerComponent extends ConfigurableInstance {
+
   override def createFromConfig(conf: Config): SchemaConsumerComponent =
     new SchemaConsumerComponent(ConfigSource.fromConfig(conf).loadOrThrow[SchemaConsumerConfig])
 }
 
 class SchemaConsumerComponent(conf: SchemaConsumerConfig) extends DataFlow with SchemaContract {
+
   override def inputContract: Option[SchemaDefinition] = Some(
     SchemaDefinition(Seq(
       SchemaField("id", "long"),
@@ -364,11 +366,13 @@ class SchemaConsumerComponent(conf: SchemaConsumerConfig) extends DataFlow with 
 case class CompatibleConsumerConfig(id: String)
 
 object CompatibleConsumerComponent extends ConfigurableInstance {
+
   override def createFromConfig(conf: Config): CompatibleConsumerComponent =
     new CompatibleConsumerComponent(ConfigSource.fromConfig(conf).loadOrThrow[CompatibleConsumerConfig])
 }
 
 class CompatibleConsumerComponent(conf: CompatibleConsumerConfig) extends DataFlow with SchemaContract {
+
   override def inputContract: Option[SchemaDefinition] = Some(
     SchemaDefinition(Seq(
       SchemaField("id", "long"),
@@ -386,16 +390,18 @@ class CompatibleConsumerComponent(conf: CompatibleConsumerConfig) extends DataFl
 case class IncompatibleConsumerConfig(id: String)
 
 object IncompatibleConsumerComponent extends ConfigurableInstance {
+
   override def createFromConfig(conf: Config): IncompatibleConsumerComponent =
     new IncompatibleConsumerComponent(ConfigSource.fromConfig(conf).loadOrThrow[IncompatibleConsumerConfig])
 }
 
 class IncompatibleConsumerComponent(conf: IncompatibleConsumerConfig) extends DataFlow with SchemaContract {
+
   override def inputContract: Option[SchemaDefinition] = Some(
     SchemaDefinition(Seq(
       SchemaField("id", "long"),
       SchemaField("name", "string"),
-      SchemaField("missing_field", "integer")  // This field is not in producer output
+      SchemaField("missing_field", "integer") // This field is not in producer output
     ))
   )
 
@@ -409,11 +415,13 @@ class IncompatibleConsumerComponent(conf: IncompatibleConsumerConfig) extends Da
 case class NoSchemaConfig(id: String)
 
 object NoSchemaComponent extends ConfigurableInstance {
+
   override def createFromConfig(conf: Config): NoSchemaComponent =
     new NoSchemaComponent(ConfigSource.fromConfig(conf).loadOrThrow[NoSchemaConfig])
 }
 
 class NoSchemaComponent(conf: NoSchemaConfig) extends DataFlow {
+
   override def run(): Unit = {
     logger.info(s"NoSchemaComponent running: ${conf.id}")
     SchemaTestTracker.executed += conf.id

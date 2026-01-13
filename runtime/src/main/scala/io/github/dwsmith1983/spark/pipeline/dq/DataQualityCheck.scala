@@ -181,10 +181,12 @@ final case class NullCheck(
       "total_rows"       -> totalCount,
       "columns_checked"  -> columns.mkString(","),
       "max_null_percent" -> maxNullPercent
-    ) ++ nullCounts.map { case (col, count, _) =>
-      s"${col}_null_count" -> (count: Any)
-    }.toMap ++ nullCounts.map { case (col, _, pct) =>
-      s"${col}_null_percent" -> (f"$pct%.2f": Any)
+    ) ++ nullCounts.map {
+      case (col, count, _) =>
+        s"${col}_null_count" -> (count: Any)
+    }.toMap ++ nullCounts.map {
+      case (col, _, pct) =>
+        s"${col}_null_percent" -> (f"$pct%.2f": Any)
     }.toMap
 
     if (failures.nonEmpty) {
@@ -279,6 +281,7 @@ final case class UniqueCheck(
   extends DataQualityCheck {
 
   require(columns.nonEmpty, "columns must not be empty")
+
   require(
     maxDuplicatePercent >= 0.0 && maxDuplicatePercent <= 100.0,
     "maxDuplicatePercent must be between 0 and 100"
@@ -310,11 +313,11 @@ final case class UniqueCheck(
     val dupPercent  = (dupCount.toDouble / totalCount) * 100.0
 
     val details = Map[String, Any](
-      "total_rows"           -> totalCount,
-      "unique_rows"          -> uniqueCount,
-      "duplicate_rows"       -> dupCount,
-      "duplicate_percent"    -> f"$dupPercent%.2f",
-      "columns_checked"      -> columns.mkString(","),
+      "total_rows"            -> totalCount,
+      "unique_rows"           -> uniqueCount,
+      "duplicate_rows"        -> dupCount,
+      "duplicate_percent"     -> f"$dupPercent%.2f",
+      "columns_checked"       -> columns.mkString(","),
       "max_duplicate_percent" -> maxDuplicatePercent
     ) ++ sampleFraction.map("sample_fraction" -> _)
 
@@ -357,6 +360,7 @@ final case class RangeCheck(
   extends DataQualityCheck {
 
   require(min.isDefined || max.isDefined, "At least one of min or max must be specified")
+
   (min, max) match {
     case (Some(minVal), Some(maxVal)) =>
       require(maxVal >= minVal, "max must be >= min")
@@ -465,7 +469,7 @@ final case class CustomSqlCheck(
 
   override val name: String = checkName
 
-  override def run(spark: SparkSession): DataQualityResult = {
+  override def run(spark: SparkSession): DataQualityResult =
     try {
       val result = spark.sql(sql).head()
       val passed = expectation(result)
@@ -494,7 +498,6 @@ final case class CustomSqlCheck(
           Map("sql" -> sql, "error" -> e.getClass.getSimpleName)
         )
     }
-  }
 }
 
 /**
