@@ -179,3 +179,17 @@ jobs:
 
       - name: Check coverage minimum
         run: ${{ matrix.coverage-cmd }}
+
+  # Summary job for branch protection
+  # Provides stable check name that doesn't change when matrix configurations change
+  ci-status:
+    name: CI Status
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [changes, lint, docs, security, test]
+    steps:
+      - name: Check CI Status
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - name: CI Passed
+        run: echo "All required CI checks passed"
