@@ -32,6 +32,7 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
     ExecutionTracker.reset()
     HooksTracker.reset()
     HooksTracker2.reset()
+    FailNTimesComponent.reset()
   }
 
   override def afterAll(): Unit =
@@ -1273,6 +1274,329 @@ class SimplePipelineRunnerSpec extends AnyFunSpec with Matchers with BeforeAndAf
         HooksTracker.events should contain("onComponentFailure:Fail2:1")
       }
     }
+
+    // =========================================================================
+    // RETRY LOGIC TESTS
+    // =========================================================================
+
+    describe("retry logic") {
+
+      it("should succeed without retry when component succeeds on first try") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "No Retry Needed"
+            retry-policy {
+              max-retries = 3
+              initial-delay-ms = 10
+            }
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Tracker"
+                instance-config { component-id = "no-retry-needed" }
+              }
+            ]
+          }
+        """)
+
+        SimplePipelineRunner.run(config, HooksTracker)
+
+        ExecutionTracker.executedComponents should contain("no-retry-needed")
+        HooksTracker.events.filter(_.startsWith("onRetryAttempt")) shouldBe empty
+        HooksTracker.lastResult shouldBe a[PipelineResult.Success]
+      }
+
+      it("should retry and succeed when component fails then succeeds") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Retry Success"
+            retry-policy {
+              max-retries = 3
+              initial-delay-ms = 10
+              jitter-factor = 0.0
+            }
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailNTimesComponent"
+                instance-name = "RetryMe"
+                instance-config {
+                  component-id = "retry-success"
+                  fail-count = 2
+                }
+              }
+            ]
+          }
+        """)
+
+        noException should be thrownBy {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        ExecutionTracker.executedComponents should contain("retry-success")
+        HooksTracker.events.filter(_.startsWith("onRetryAttempt")) should have size 2
+        HooksTracker.lastResult shouldBe a[PipelineResult.Success]
+      }
+
+      it("should fail after exhausting all retries") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Retry Exhausted"
+            retry-policy {
+              max-retries = 2
+              initial-delay-ms = 10
+              jitter-factor = 0.0
+            }
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailNTimesComponent"
+                instance-name = "AlwaysFails"
+                instance-config {
+                  component-id = "retry-exhausted"
+                  fail-count = 10
+                }
+              }
+            ]
+          }
+        """)
+
+        val exception: RuntimeException = intercept[RuntimeException] {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        exception.getMessage should include("Transient failure")
+        HooksTracker.events.filter(_.startsWith("onRetryAttempt")) should have size 2
+        HooksTracker.events should contain("onComponentFailure:AlwaysFails:0")
+      }
+
+      it("should use component-level retry policy over pipeline-level") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Component Override"
+            retry-policy {
+              max-retries = 1
+              initial-delay-ms = 10
+            }
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailNTimesComponent"
+                instance-name = "WithOverride"
+                instance-config {
+                  component-id = "component-override"
+                  fail-count = 3
+                }
+                retry-policy {
+                  max-retries = 5
+                  initial-delay-ms = 10
+                  jitter-factor = 0.0
+                }
+              }
+            ]
+          }
+        """)
+
+        noException should be thrownBy {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        ExecutionTracker.executedComponents should contain("component-override")
+        HooksTracker.events.filter(_.startsWith("onRetryAttempt")) should have size 3
+      }
+
+      it("should not retry when no retry policy is configured") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "No Retry Policy"
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailNTimesComponent"
+                instance-name = "NoRetry"
+                instance-config {
+                  component-id = "no-retry-policy"
+                  fail-count = 1
+                }
+              }
+            ]
+          }
+        """)
+
+        intercept[RuntimeException] {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        HooksTracker.events.filter(_.startsWith("onRetryAttempt")) shouldBe empty
+        HooksTracker.events should contain("onComponentFailure:NoRetry:0")
+      }
+
+      it("should invoke onRetryAttempt hook with correct parameters") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Retry Hook Test"
+            retry-policy {
+              max-retries = 3
+              initial-delay-ms = 100
+              jitter-factor = 0.0
+            }
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailNTimesComponent"
+                instance-name = "HookTest"
+                instance-config {
+                  component-id = "hook-test"
+                  fail-count = 2
+                }
+              }
+            ]
+          }
+        """)
+
+        SimplePipelineRunner.run(config, HooksTracker)
+
+        val retryEvents: List[String] = HooksTracker.events.filter(_.startsWith("onRetryAttempt")).toList
+        retryEvents should have size 2
+        retryEvents(0) should startWith("onRetryAttempt:HookTest:1:3:")
+        retryEvents(1) should startWith("onRetryAttempt:HookTest:2:3:")
+      }
+
+      it("should work with failFast=false and retry") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "FailFast False Retry"
+            fail-fast = false
+            retry-policy {
+              max-retries = 2
+              initial-delay-ms = 10
+              jitter-factor = 0.0
+            }
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailNTimesComponent"
+                instance-name = "First"
+                instance-config {
+                  component-id = "failfast-retry-1"
+                  fail-count = 1
+                }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailNTimesComponent"
+                instance-name = "Second"
+                instance-config {
+                  component-id = "failfast-retry-2"
+                  fail-count = 10
+                }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.TrackingComponent"
+                instance-name = "Third"
+                instance-config { component-id = "failfast-retry-3" }
+              }
+            ]
+          }
+        """)
+
+        noException should be thrownBy {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        ExecutionTracker.executedComponents should contain("failfast-retry-1")
+        ExecutionTracker.executedComponents should not contain "failfast-retry-2"
+        ExecutionTracker.executedComponents should contain("failfast-retry-3")
+        HooksTracker.lastResult shouldBe a[PipelineResult.PartialSuccess]
+      }
+    }
+
+    // =========================================================================
+    // CIRCUIT BREAKER TESTS
+    // =========================================================================
+
+    describe("circuit breaker") {
+
+      it("should open circuit breaker after failure threshold") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "Circuit Breaker Test"
+            fail-fast = false
+            circuit-breaker {
+              failure-threshold = 2
+              reset-timeout-ms = 60000
+            }
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailOnRunComponent"
+                instance-name = "Fail1"
+                instance-config { fail-message = "fail 1" }
+              },
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailOnRunComponent"
+                instance-name = "Fail2"
+                instance-config { fail-message = "fail 2" }
+              }
+            ]
+          }
+        """)
+
+        noException should be thrownBy {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        HooksTracker.lastResult shouldBe a[PipelineResult.PartialSuccess]
+      }
+
+      it("should work without circuit breaker when not configured") {
+        val config: Config = ConfigFactory.parseString("""
+          spark {
+            master = "local[1]"
+          }
+          pipeline {
+            pipeline-name = "No Circuit Breaker"
+            retry-policy {
+              max-retries = 2
+              initial-delay-ms = 10
+              jitter-factor = 0.0
+            }
+            pipeline-components = [
+              {
+                instance-type = "io.github.dwsmith1983.spark.pipeline.runner.FailNTimesComponent"
+                instance-name = "RetryNoCircuit"
+                instance-config {
+                  component-id = "no-circuit"
+                  fail-count = 2
+                }
+              }
+            ]
+          }
+        """)
+
+        noException should be thrownBy {
+          SimplePipelineRunner.run(config, HooksTracker)
+        }
+
+        ExecutionTracker.executedComponents should contain("no-circuit")
+      }
+    }
   }
 }
 
@@ -1319,6 +1643,24 @@ object HooksTracker extends PipelineHooks {
     val _ = error // suppress unused warning
     events += s"onComponentFailure:${config.instanceName}:$index"
   }
+
+  override def onRetryAttempt(
+    config: ComponentConfig,
+    attempt: Int,
+    maxAttempts: Int,
+    delayMs: Long,
+    error: Throwable
+  ): Unit = {
+    val _ = error
+    events += s"onRetryAttempt:${config.instanceName}:$attempt:$maxAttempts:$delayMs"
+  }
+
+  override def onCircuitBreakerStateChange(
+    componentName: String,
+    oldState: CircuitState,
+    newState: CircuitState
+  ): Unit =
+    events += s"onCircuitBreakerStateChange:$componentName:${oldState.name}:${newState.name}"
 }
 
 object HooksTracker2 extends PipelineHooks {
@@ -1492,4 +1834,29 @@ object BadCompanionComponent {
 class BadCompanionComponent extends DataFlow {
 
   override def run(): Unit = ()
+}
+
+// Component that fails N times then succeeds (for retry testing)
+case class FailNTimesConfig(componentId: String, failCount: Int)
+
+object FailNTimesComponent extends ConfigurableInstance {
+  // Track failure counts per component ID
+  val failureCounts: mutable.Map[String, Int] = mutable.Map.empty
+
+  def reset(): Unit = failureCounts.clear()
+
+  override def createFromConfig(conf: Config): FailNTimesComponent =
+    new FailNTimesComponent(ConfigSource.fromConfig(conf).loadOrThrow[FailNTimesConfig])
+}
+
+class FailNTimesComponent(conf: FailNTimesConfig) extends DataFlow {
+
+  override def run(): Unit = {
+    val currentCount: Int = FailNTimesComponent.failureCounts.getOrElse(conf.componentId, 0)
+    if (currentCount < conf.failCount) {
+      FailNTimesComponent.failureCounts(conf.componentId) = currentCount + 1
+      throw new RuntimeException(s"Transient failure ${currentCount + 1}/${conf.failCount}")
+    }
+    ExecutionTracker.executedComponents += conf.componentId
+  }
 }
