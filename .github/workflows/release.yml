@@ -1,14 +1,10 @@
 name: Publish
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to publish (for logging only)'
-        required: false
-        type: string
 
 jobs:
   publish:
