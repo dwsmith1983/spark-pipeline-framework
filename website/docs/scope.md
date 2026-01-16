@@ -4,9 +4,9 @@ This page describes what Spark Pipeline Framework is designed for, its intention
 
 ## Design Philosophy
 
-Spark Pipeline Framework is built on a single principle: **configuration-driven simplicity**.
+Spark Pipeline Framework is built on a single principle: **configuration-driven simplicity for batch and streaming Spark workloads**.
 
-The framework enables teams to build production Spark batch pipelines using HOCON configuration files, with minimal boilerplate and maximum clarity. It prioritizes:
+The framework enables teams to build production Spark pipelines (batch and streaming) using HOCON configuration files, with minimal boilerplate and maximum clarity. It prioritizes:
 
 - **Simplicity over flexibility** - Sequential execution, not DAGs
 - **Configuration over code** - Pipelines defined in HOCON, not Scala/Python
@@ -205,6 +205,7 @@ The framework's core features are now complete. Future development will focus on
 | Feature | This Framework | Airflow | Prefect | Custom Spark |
 |---------|---------------|---------|---------|--------------|
 | **Execution** | Sequential | DAG | DAG | Any |
+| **Streaming** | Yes (Structured Streaming) | No | No | Yes |
 | **Config format** | HOCON | Python | Python | Code |
 | **Scheduling** | External | Built-in | Built-in | External |
 | **Learning curve** | Low | Medium | Medium | Low |
