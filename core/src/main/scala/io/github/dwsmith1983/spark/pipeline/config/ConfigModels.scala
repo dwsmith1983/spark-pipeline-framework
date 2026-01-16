@@ -127,8 +127,10 @@ case class ComponentConfig(
  * {{{
  * spark {
  *   connect-string = "sc://your-workspace.cloud.databricks.com"
- *   databricks-token = "dapi123..."  // or reference env var
  *   app-name = "MyPipeline"
+ *   config {
+ *     "spark.databricks.token" = "dapi123..."
+ *   }
  * }
  * }}}
  *
@@ -138,12 +140,9 @@ case class ComponentConfig(
  * @param config Additional Spark configuration key-value pairs
  * @param connectString Spark Connect connection string (sc://host:port).
  *                      When set, creates a remote Spark Connect session instead of local.
- * @param databricksToken Optional Databricks authentication token.
- *                        Used with Databricks Connect. Can reference environment variable.
  */
 case class SparkConfig(
   master: Option[String] = None,
   appName: Option[String] = None,
   config: Map[String, String] = Map.empty,
-  connectString: Option[String] = None,
-  databricksToken: Option[String] = None)
+  connectString: Option[String] = None)

@@ -80,9 +80,9 @@ For Databricks, use the workspace URL as the connection string:
 spark {
   app-name = "My Pipeline"
   connect-string = "sc://your-workspace.cloud.databricks.com"
-  databricks-token = ${?DATABRICKS_TOKEN}
 
   config {
+    "spark.databricks.token" = ${?DATABRICKS_TOKEN}
     "spark.databricks.cluster.id" = "your-cluster-id"
   }
 }

@@ -43,7 +43,6 @@ spark {
 | `master` | String | No | Spark master URL (prefer spark-submit). Ignored if `connect-string` is set. |
 | `config` | Map | No | Key-value pairs for SparkConf |
 | `connect-string` | String | No | Spark Connect connection string (sc://host:port). When set, creates a remote Spark Connect session instead of local. Requires Spark 3.4+. |
-| `databricks-token` | String | No | Databricks authentication token for Databricks Connect. Can reference environment variable. |
 
 ### Spark Connect Support (Spark 3.4+)
 
@@ -94,9 +93,9 @@ Connect to Databricks using Spark Connect:
 spark {
   app-name = "My Pipeline"
   connect-string = "sc://your-workspace.cloud.databricks.com"
-  databricks-token = ${?DATABRICKS_TOKEN}  // Read from environment
 
   config {
+    "spark.databricks.token" = ${?DATABRICKS_TOKEN}
     "spark.databricks.cluster.id" = "your-cluster-id"
   }
 }

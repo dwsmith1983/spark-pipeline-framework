@@ -179,11 +179,13 @@ class SparkConnectorSpec extends AnyFunSpec with Matchers with BeforeAndAfterEac
 
     describe("configuration") {
 
-      it("should construct connector with Databricks token") {
+      it("should construct connector with Databricks configuration") {
         val config: SparkConfig = SparkConfig(
           connectString = Some("sc://workspace.cloud.databricks.com"),
-          databricksToken = Some("dapi123456"),
-          appName = Some("DatabricksTest")
+          appName = Some("DatabricksTest"),
+          config = Map(
+            "spark.databricks.token" -> "dapi123456"
+          )
         )
 
         // Just verify we can create the connector
