@@ -127,7 +127,7 @@ case class ComponentConfig(
  * {{{
  * spark {
  *   connect-string = "sc://your-workspace.cloud.databricks.com"
- *   databricks-token = ${?DATABRICKS_TOKEN}
+ *   databricks-token = "dapi123..."  // or reference env var
  *   app-name = "MyPipeline"
  * }
  * }}}
