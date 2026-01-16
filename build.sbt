@@ -288,8 +288,8 @@ lazy val example = (projectMatrix in file("example"))
     name := "spark-pipeline-example",
     commonSettings,
     publish / skip := true,
-    // Exclude demo files from coverage - runnable demos with main() don't need coverage
-    coverageExcludedFiles := ".*Demo.*Pipeline.*;.*Demo.*Hooks.*;.*ValidationDemo.*;.*FailingComponent.*"
+    // Exclude demo/example files from coverage - runnable demos with main() don't need coverage
+    coverageExcludedFiles := ".*Demo.*Pipeline.*;.*Demo.*Hooks.*;.*ValidationDemo.*;.*FailingComponent.*;.*Example.*"
   )
   .customRow(
     scalaVersions = Seq(scala212),
