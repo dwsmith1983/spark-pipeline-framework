@@ -25,7 +25,8 @@ Component A → Component B → Component C → Done
 
 This model works well for:
 
-- **ETL pipelines** with clear input → transform → output stages
+- **Batch ETL pipelines** with clear input → transform → output stages
+- **Streaming pipelines** with sequential data transformations
 - **Data ingestion** from source systems to data lakes
 - **Feature engineering** pipelines with ordered transformations
 - **Report generation** with sequential aggregations
@@ -92,19 +93,20 @@ The framework does **not** support:
 - Dagster
 - Apache Argo Workflows
 
-### Not a Streaming Framework
+### Streaming Support
 
-This framework is for **batch processing only**. It does not support:
+The framework supports **both batch and streaming pipelines** via Spark Structured Streaming integration:
 
-- Structured Streaming
-- Continuous processing
-- Micro-batch streaming
-- Real-time data ingestion
+- Streaming sources: Kafka, Kinesis, EventHubs, File, Delta, Iceberg
+- Streaming sinks: Kafka, Kinesis, EventHubs, File, Delta, Iceberg, Console
+- Sequential processing of streaming DataFrames
+- Configuration-driven streaming component definition
 
-**If you need streaming**, use:
-- Spark Structured Streaming directly
-- Apache Flink
-- Apache Kafka Streams
+See [Streaming](./streaming.md) for details.
+
+**For complex stream processing**, consider:
+- Apache Flink (native streaming engine)
+- Apache Kafka Streams (Kafka-native processing)
 
 ### Optional Schema Contracts
 
@@ -143,7 +145,8 @@ The framework runs a single pipeline to completion. It does not:
 
 | Scenario | Why It Works |
 |----------|--------------|
-| Simple ETL pipelines | Sequential stages, clear flow |
+| Batch ETL pipelines | Sequential stages, clear flow |
+| Streaming ETL pipelines | Structured Streaming with ordered transforms |
 | Data migration jobs | Ordered steps, config-driven |
 | Batch report generation | Predictable execution order |
 | Feature engineering | Transform chains without branches |
@@ -154,7 +157,7 @@ The framework runs a single pipeline to completion. It does not:
 | Scenario | Better Alternative |
 |----------|-------------------|
 | Complex DAG workflows | Airflow, Prefect, Dagster |
-| Real-time streaming | Spark Streaming, Flink |
+| Complex event processing | Apache Flink |
 | ML training pipelines | MLflow, Kubeflow, SageMaker |
 | Multi-pipeline orchestration | Airflow, Argo Workflows |
 | Interactive data exploration | Notebooks, Spark Shell |
@@ -183,22 +186,19 @@ The framework runs a single pipeline to completion. It does not:
 
 ## Future Roadmap
 
-The following features are planned for future versions:
+The framework's core features are now complete. Future development will focus on refinements and cloud-native enhancements:
 
-### v1.2.0 (Current)
+### Completed Features
 
-- **Schema contracts**: Optional input/output schema validation between components (see [Schema Contracts](./schema-contracts.md))
-
-### v2.0 (Planned)
-
-- **Checkpointing**: Resume pipelines from last successful component
-- **Parallel execution**: DAG-based component execution (opt-in)
+- **v1.1.0**: Configuration validation, Secrets management, Streaming core
+- **v1.2.0**: Schema contracts, Checkpointing, Retry logic, Data quality hooks
+- **v1.3.0**: Complete streaming sources/sinks (Kafka, Kinesis, EventHubs, File, Delta, Iceberg)
 
 ### Under Consideration
 
-- Built-in data quality hooks
-- Spark UI integration
-- Circuit breaker patterns
+- Additional streaming source/sink connectors
+- Enhanced observability integrations
+- Cloud-specific optimizations
 
 ## Comparison with Alternatives
 
@@ -215,16 +215,17 @@ The following features are planned for future versions:
 
 Spark Pipeline Framework is the right choice when you need:
 
-- Simple, sequential batch pipelines
+- Simple, sequential batch or streaming pipelines
 - Configuration-driven architecture
 - Production-ready observability
 - Optional schema contracts between components
+- Structured Streaming integration
 - Minimal operational complexity
 
 It is **not** the right choice when you need:
 
-- Complex DAG workflows
-- Real-time streaming
-- Built-in scheduling
+- Complex DAG workflows with parallel execution
+- Complex event processing or stateful stream operations
+- Built-in scheduling and orchestration
 
-The framework embraces the Unix philosophy: **do one thing well**. For sequential Spark batch pipelines with configuration-driven flexibility, it provides a clean, production-ready solution.
+The framework embraces the Unix philosophy: **do one thing well**. For sequential Spark pipelines (batch or streaming) with configuration-driven flexibility, it provides a clean, production-ready solution.
