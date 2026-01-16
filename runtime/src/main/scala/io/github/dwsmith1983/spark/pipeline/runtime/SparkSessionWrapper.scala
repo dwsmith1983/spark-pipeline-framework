@@ -56,25 +56,16 @@ object SparkSessionWrapper {
    * are instantiated. Subsequent calls to `getOrCreate()` will return this
    * configured session.
    *
+   * Automatically selects between local and Spark Connect modes based on configuration:
+   * - If connectString is present: creates a remote Spark Connect session
+   * - Otherwise: creates a traditional local/cluster session
+   *
    * @param sparkConfig The Spark configuration from the config file
    * @return The configured SparkSession
    */
   def configure(sparkConfig: SparkConfig): SparkSession = lock.synchronized {
-    val builder: SparkSession.Builder = SparkSession.builder()
-
-    // Apply master if specified
-    sparkConfig.master.foreach(m => builder.master(m))
-
-    // Apply app name if specified
-    sparkConfig.appName.foreach(name => builder.appName(name))
-
-    // Apply all additional Spark config
-    sparkConfig.config.foreach {
-      case (key, value) =>
-        builder.config(key, value)
-    }
-
-    val session: SparkSession = builder.getOrCreate()
+    val connector: SparkConnector = SparkConnector(sparkConfig)
+    val session: SparkSession     = connector.getSession
     configuredSession = Some(session)
     session
   }
