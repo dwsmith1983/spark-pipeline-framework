@@ -1,4 +1,4 @@
-package io.github.dwsmith1983.pipelines
+package io.github.dwsmith1983.pipelines.examples
 
 import io.github.dwsmith1983.spark.pipeline.config._
 import io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner
@@ -141,15 +141,13 @@ object BatchPipelineExample {
       """)
 
       // Create monitoring hooks
-      println("[RUNNING] Building pipeline with monitoring hooks...")
-      val loggingHooks  = new BatchLoggingHooks()
-      val metricsHooks  = new DemoMetricsHooks()
-      val combinedHooks = PipelineHooks.compose(loggingHooks, metricsHooks)
+      println("[RUNNING] Building pipeline with logging hooks...")
+      val loggingHooks = new BatchLoggingHooks()
 
       // Execute the pipeline
       println("[RUNNING] Executing batch pipeline...")
       println()
-      SimplePipelineRunner.run(config, combinedHooks)
+      SimplePipelineRunner.run(config, loggingHooks)
 
       // Display results
       println()
@@ -161,13 +159,6 @@ object BatchPipelineExample {
       println(s"  1. Cleaned Sales:   $cleanedSalesPath")
       println(s"  2. Sales Summary:   $summaryPath")
       println(s"  3. Enriched Sales:  $enrichedPath")
-      println()
-
-      // Show metrics
-      println("=" * 80)
-      println("  EXECUTION METRICS")
-      println("=" * 80)
-      println(metricsHooks.generateReport())
       println()
 
       println("[SUCCESS] Batch pipeline completed successfully!")

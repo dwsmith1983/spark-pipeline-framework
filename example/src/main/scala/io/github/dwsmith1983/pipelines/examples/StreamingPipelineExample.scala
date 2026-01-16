@@ -1,4 +1,4 @@
-package io.github.dwsmith1983.pipelines
+package io.github.dwsmith1983.pipelines.examples
 
 import io.github.dwsmith1983.pipelines.streaming.{ConsoleStreamSink, RateStreamSource}
 import io.github.dwsmith1983.spark.pipeline.runtime.{DataFlow, SparkSessionWrapper}
