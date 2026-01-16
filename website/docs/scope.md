@@ -189,6 +189,11 @@ The following features are planned for future versions:
 
 - **Schema contracts**: Optional input/output schema validation between components (see [Schema Contracts](./schema-contracts.md))
 
+### v2.0 (Planned)
+
+- **Checkpointing**: Resume pipelines from last successful component
+- **Parallel execution**: DAG-based component execution (opt-in)
+
 ### Under Consideration
 
 - Built-in data quality hooks
