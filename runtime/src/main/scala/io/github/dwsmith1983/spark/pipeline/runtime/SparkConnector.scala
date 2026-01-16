@@ -89,9 +89,7 @@ class SparkConnectConnector(sparkConfig: SparkConfig) extends SparkConnector {
     sparkConfig.appName.foreach(name => builder.appName(name))
 
     // Apply Databricks token if specified
-    sparkConfig.databricksToken.foreach { token =>
-      builder.config("spark.databricks.token", token)
-    }
+    sparkConfig.databricksToken.foreach(token => builder.config("spark.databricks.token", token))
 
     // Apply all additional Spark config
     sparkConfig.config.foreach {
@@ -103,9 +101,7 @@ class SparkConnectConnector(sparkConfig: SparkConfig) extends SparkConnector {
   }
 }
 
-/**
- * Factory for creating SparkConnectors based on configuration.
- */
+/** Factory for creating SparkConnectors based on configuration. */
 object SparkConnector {
 
   /**

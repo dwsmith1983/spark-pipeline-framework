@@ -27,7 +27,7 @@ class SparkConnectorSpec extends AnyFunSpec with Matchers with BeforeAndAfterEac
     describe("connector selection") {
 
       it("should select LocalSparkConnector when connectString is not provided") {
-        val config: SparkConfig      = SparkConfig(master = Some("local[1]"), appName = Some("LocalTest"))
+        val config: SparkConfig       = SparkConfig(master = Some("local[1]"), appName = Some("LocalTest"))
         val connector: SparkConnector = SparkConnector(config)
 
         connector shouldBe a[LocalSparkConnector]
@@ -61,7 +61,7 @@ class SparkConnectorSpec extends AnyFunSpec with Matchers with BeforeAndAfterEac
     describe("happy path") {
 
       it("should create a SparkSession with master configuration") {
-        val config: SparkConfig           = SparkConfig(master = Some("local[1]"), appName = Some("LocalTest"))
+        val config: SparkConfig            = SparkConfig(master = Some("local[1]"), appName = Some("LocalTest"))
         val connector: LocalSparkConnector = new LocalSparkConnector(config)
 
         val session: SparkSession = connector.getSession
@@ -92,7 +92,7 @@ class SparkConnectorSpec extends AnyFunSpec with Matchers with BeforeAndAfterEac
       }
 
       it("should return existing session when called multiple times") {
-        val config: SparkConfig           = SparkConfig(master = Some("local[1]"), appName = Some("ReuseTest"))
+        val config: SparkConfig            = SparkConfig(master = Some("local[1]"), appName = Some("ReuseTest"))
         val connector: LocalSparkConnector = new LocalSparkConnector(config)
 
         val session1: SparkSession = connector.getSession
