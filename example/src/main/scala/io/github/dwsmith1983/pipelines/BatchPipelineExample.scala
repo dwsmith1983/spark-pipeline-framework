@@ -71,12 +71,12 @@ object BatchPipelineExample {
     println()
 
     // Create temporary directories for demo data
-    val tempDir: Path = Files.createTempDirectory("batch-pipeline-example")
-    val salesCsvPath: Path = tempDir.resolve("sales.csv")
-    val productsCsvPath: Path = tempDir.resolve("products.csv")
+    val tempDir: Path          = Files.createTempDirectory("batch-pipeline-example")
+    val salesCsvPath: Path     = tempDir.resolve("sales.csv")
+    val productsCsvPath: Path  = tempDir.resolve("products.csv")
     val cleanedSalesPath: Path = tempDir.resolve("cleaned-sales")
-    val summaryPath: Path = tempDir.resolve("sales-summary")
-    val enrichedPath: Path = tempDir.resolve("enriched-sales")
+    val summaryPath: Path      = tempDir.resolve("sales-summary")
+    val enrichedPath: Path     = tempDir.resolve("enriched-sales")
 
     try {
       // Create sample data
@@ -142,8 +142,8 @@ object BatchPipelineExample {
 
       // Create monitoring hooks
       println("[RUNNING] Building pipeline with monitoring hooks...")
-      val loggingHooks = new BatchLoggingHooks()
-      val metricsHooks = new DemoMetricsHooks()
+      val loggingHooks  = new BatchLoggingHooks()
+      val metricsHooks  = new DemoMetricsHooks()
       val combinedHooks = PipelineHooks.compose(loggingHooks, metricsHooks)
 
       // Execute the pipeline
@@ -252,6 +252,7 @@ object BatchPipelineExample {
    * Demonstrates how to implement PipelineHooks for monitoring and observability.
    */
   class BatchLoggingHooks extends PipelineHooks {
+
     override def beforePipeline(config: PipelineConfig): Unit = {
       println(s"┌─ PIPELINE START: ${config.pipelineName}")
       println(s"│  Components: ${config.pipelineComponents.size}")
@@ -273,7 +274,7 @@ object BatchPipelineExample {
       println("│")
     }
 
-    override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit = {
+    override def afterPipeline(config: PipelineConfig, result: PipelineResult): Unit =
       result match {
         case PipelineResult.Success(duration, count) =>
           println(s"└─ PIPELINE SUCCESS: $count components in ${duration}ms")
@@ -285,11 +286,11 @@ object BatchPipelineExample {
 
         case PipelineResult.PartialSuccess(duration, succeeded, failed, failures) =>
           println(s"└─ PIPELINE PARTIAL: $succeeded succeeded, $failed failed in ${duration}ms")
-          failures.foreach { case (c, e) =>
-            println(s"   Failed: ${c.instanceName} - ${e.getMessage}")
+          failures.foreach {
+            case (c, e) =>
+              println(s"   Failed: ${c.instanceName} - ${e.getMessage}")
           }
       }
-    }
 
     override def onComponentFailure(config: ComponentConfig, index: Int, error: Throwable): Unit = {
       println(s"│  ✗ FAILED: ${config.instanceName}")
@@ -311,6 +312,7 @@ object BatchPipelineExample {
    * - Writing to Parquet for efficient storage
    */
   object SalesETL extends ConfigurableInstance {
+
     import pureconfig._
     import pureconfig.generic.auto._
 
@@ -372,6 +374,7 @@ object BatchPipelineExample {
    * - Writing to JSON for human readability
    */
   object SalesAggregation extends ConfigurableInstance {
+
     import pureconfig._
     import pureconfig.generic.auto._
 
@@ -430,6 +433,7 @@ object BatchPipelineExample {
    * - Creating enriched output datasets
    */
   object SalesEnrichment extends ConfigurableInstance {
+
     import pureconfig._
     import pureconfig.generic.auto._
 
