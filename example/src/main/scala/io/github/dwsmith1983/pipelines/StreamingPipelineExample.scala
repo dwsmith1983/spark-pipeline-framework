@@ -136,12 +136,11 @@ object StreamingPipelineExample extends SparkSessionWrapper {
         )
 
         // Apply simple transformations
-        override def transform(df: DataFrame): DataFrame = {
+        override def transform(df: DataFrame): DataFrame =
           df.withColumn("doubled_value", col("value") * 2)
             .withColumn("is_even", col("value") % 2 === 0)
             .filter(col("value") % 3 === 0) // Only multiples of 3
             .select("timestamp", "value", "doubled_value", "is_even")
-        }
 
         // Use micro-batch trigger (every 5 seconds)
         override def trigger: TriggerConfig = TriggerConfig.ProcessingTime("5 seconds")
@@ -205,7 +204,7 @@ object StreamingPipelineExample extends SparkSessionWrapper {
         )
 
         // Apply windowed aggregations
-        override def transform(df: DataFrame): DataFrame = {
+        override def transform(df: DataFrame): DataFrame =
           df.withWatermark("timestamp", "10 seconds")
             .groupBy(
               window(col("timestamp"), "10 seconds"),
@@ -229,7 +228,6 @@ object StreamingPipelineExample extends SparkSessionWrapper {
               col("value_max")
             )
             .orderBy(col("window_start").desc, col("value_mod_10"))
-        }
 
         override def trigger: TriggerConfig = TriggerConfig.ProcessingTime("5 seconds")
       }
@@ -296,7 +294,8 @@ object StreamingPipelineExample extends SparkSessionWrapper {
         override def transform(df: DataFrame): DataFrame = {
           // Categorize values and compute running statistics
           val categorized = df
-            .withColumn("category",
+            .withColumn(
+              "category",
               when(col("value") < 100, "low")
                 .when(col("value") < 200, "medium")
                 .otherwise("high")
@@ -353,8 +352,7 @@ object StreamingPipelineExample extends SparkSessionWrapper {
    */
   class CustomEventStreamPipeline(
     checkpointPath: String,
-    eventsPerSecond: Int = 50
-  ) extends StreamingPipeline with DataFlow {
+    eventsPerSecond: Int = 50) extends StreamingPipeline with DataFlow {
 
     override val name: String = "CustomEventStreamPipeline"
 
@@ -380,11 +378,12 @@ object StreamingPipelineExample extends SparkSessionWrapper {
     )
 
     // Complex transformation logic
-    override def transform(df: DataFrame): DataFrame = {
+    override def transform(df: DataFrame): DataFrame =
       df.withColumn("event_id", monotonically_increasing_id())
         .withColumn("event_hour", hour(col("timestamp")))
         .withColumn("event_minute", minute(col("timestamp")))
-        .withColumn("value_range",
+        .withColumn(
+          "value_range",
           when(col("value") < 50, "0-49")
             .when(col("value") < 150, "50-149")
             .when(col("value") < 250, "150-249")
@@ -399,7 +398,6 @@ object StreamingPipelineExample extends SparkSessionWrapper {
           "value",
           "value_range"
         )
-    }
 
     override def trigger: TriggerConfig = TriggerConfig.ProcessingTime("3 seconds")
 
@@ -430,7 +428,7 @@ object StreamingPipelineExample extends SparkSessionWrapper {
   }
 
   // Cleanup utility
-  private def cleanup(tempDir: Path): Unit = {
+  private def cleanup(tempDir: Path): Unit =
     try {
       Files.walk(tempDir)
         .sorted(java.util.Comparator.reverseOrder())
@@ -440,5 +438,4 @@ object StreamingPipelineExample extends SparkSessionWrapper {
     } catch {
       case _: Exception => // Ignore cleanup errors
     }
-  }
 }
