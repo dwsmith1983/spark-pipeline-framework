@@ -21,7 +21,7 @@ class StreamingPipelineExampleSpec extends AnyFunSuite with Matchers {
 
   test("example methods should be accessible") {
     // Verify the example methods exist
-    val simpleMethod = StreamingPipelineExample.getClass.getMethod("runSimpleStreamingExample")
+    val simpleMethod   = StreamingPipelineExample.getClass.getMethod("runSimpleStreamingExample")
     val windowedMethod = StreamingPipelineExample.getClass.getMethod("runWindowedAggregationExample")
     val statefulMethod = StreamingPipelineExample.getClass.getMethod("runStatefulProcessingExample")
 
