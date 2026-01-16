@@ -12,6 +12,150 @@ Spark Pipeline Framework supports all standard Spark deployment modes:
 | YARN | Hadoop clusters | YARN ResourceManager |
 | Kubernetes | Cloud-native deployments | K8s API Server |
 | Standalone | Dedicated Spark clusters | Spark Master |
+| Spark Connect | Remote thin client | Spark Connect Server |
+
+## Spark Connect Deployment (Spark 3.4+)
+
+[Spark Connect](https://spark.apache.org/docs/latest/spark-connect-overview.html) enables thin client deployments where the Spark driver runs on a remote server, not embedded in your application.
+
+### Benefits of Spark Connect
+
+**Thin Client Applications:**
+- Smaller application JARs (no embedded Spark driver)
+- Faster deployment and container startup
+- Reduced memory footprint on client machines
+
+**Better Resource Isolation:**
+- Client application failures don't crash the Spark cluster
+- Multiple clients can share a single Spark Connect server
+- Easier to scale clients independently of the cluster
+
+**Cloud-Native Architecture:**
+- Works with Databricks Connect, AWS EMR, and other managed services
+- Simplified authentication and connection management
+- Better suited for serverless and containerized deployments
+
+### Spark Connect Configuration
+
+Update your pipeline configuration to use a Spark Connect server:
+
+```json
+spark {
+  app-name = "My Pipeline"
+  connect-string = "sc://spark-connect-server:15002"
+
+  config {
+    "spark.executor.memory" = "4g"
+    "spark.executor.cores" = "2"
+  }
+}
+```
+
+### Running with Spark Connect
+
+The application runs as a lightweight client:
+
+```bash
+# No need for spark-submit - run as a regular Java application
+java -Dconfig.file=/path/to/pipeline.conf \
+  -jar my-pipeline-assembly.jar
+```
+
+Or with minimal Spark dependencies:
+
+```bash
+spark-submit \
+  --master local[1] \
+  --class io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner \
+  --driver-memory 512m \
+  my-pipeline-assembly.jar \
+  -Dconfig.file=/path/to/pipeline.conf
+```
+
+### Databricks Connect
+
+For Databricks, use the workspace URL as the connection string:
+
+```json
+spark {
+  app-name = "My Pipeline"
+  connect-string = "sc://your-workspace.cloud.databricks.com"
+  databricks-token = ${?DATABRICKS_TOKEN}
+
+  config {
+    "spark.databricks.cluster.id" = "your-cluster-id"
+  }
+}
+```
+
+Run with authentication:
+
+```bash
+export DATABRICKS_TOKEN=dapi123456789...
+java -Dconfig.file=/path/to/pipeline.conf \
+  -jar my-pipeline-assembly.jar
+```
+
+### Spark Connect Server Setup
+
+To run your own Spark Connect server:
+
+```bash
+# Start Spark Connect server
+$SPARK_HOME/sbin/start-connect-server.sh \
+  --packages org.apache.spark:spark-connect_2.13:3.5.0 \
+  --master yarn \
+  --conf spark.connect.grpc.binding.port=15002
+```
+
+Or in Kubernetes:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-connect
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 15002
+      targetPort: 15002
+  selector:
+    app: spark-connect
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-connect
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-connect
+  template:
+    metadata:
+      labels:
+        app: spark-connect
+    spec:
+      containers:
+        - name: spark-connect
+          image: apache/spark:3.5.0
+          command:
+            - /opt/spark/sbin/start-connect-server.sh
+          args:
+            - --master
+            - k8s://https://kubernetes.default.svc
+            - --conf
+            - spark.connect.grpc.binding.port=15002
+          ports:
+            - containerPort: 15002
+```
+
+### Version Requirements
+
+- **Spark 3.4 or later** required for Spark Connect
+- Framework automatically detects version compatibility at runtime
+- Clear error message if attempting to use with earlier Spark versions
 
 ## Packaging Your Application
 

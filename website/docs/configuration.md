@@ -40,8 +40,101 @@ spark {
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `app-name` | String | Yes | Application name shown in Spark UI |
-| `master` | String | No | Spark master URL (prefer spark-submit) |
+| `master` | String | No | Spark master URL (prefer spark-submit). Ignored if `connect-string` is set. |
 | `config` | Map | No | Key-value pairs for SparkConf |
+| `connect-string` | String | No | Spark Connect connection string (sc://host:port). When set, creates a remote Spark Connect session instead of local. Requires Spark 3.4+. |
+| `databricks-token` | String | No | Databricks authentication token for Databricks Connect. Can reference environment variable. |
+
+### Spark Connect Support (Spark 3.4+)
+
+Starting from Spark 3.4, the framework supports [Spark Connect](https://spark.apache.org/docs/latest/spark-connect-overview.html) for remote Spark connectivity. Spark Connect allows you to:
+
+- Connect to remote Spark clusters without embedding the Spark driver
+- Deploy thin clients with minimal Spark dependencies
+- Achieve better resource isolation between client and cluster
+- Use managed services like Databricks Connect
+
+#### Local Spark Session (Default)
+
+Traditional local or cluster deployment:
+
+```json
+spark {
+  app-name = "My Pipeline"
+  master = "local[*]"  // or yarn, spark://host:port
+
+  config {
+    "spark.executor.memory" = "4g"
+    "spark.executor.cores" = "2"
+  }
+}
+```
+
+#### Spark Connect Mode
+
+Connect to a remote Spark Connect server:
+
+```json
+spark {
+  app-name = "My Pipeline"
+  connect-string = "sc://spark-server:15002"
+
+  config {
+    "spark.executor.memory" = "4g"
+    "spark.executor.cores" = "2"
+  }
+}
+```
+
+#### Databricks Connect
+
+Connect to Databricks using Spark Connect:
+
+```json
+spark {
+  app-name = "My Pipeline"
+  connect-string = "sc://your-workspace.cloud.databricks.com"
+  databricks-token = ${?DATABRICKS_TOKEN}  // Read from environment
+
+  config {
+    "spark.databricks.cluster.id" = "your-cluster-id"
+  }
+}
+```
+
+Run with:
+```bash
+export DATABRICKS_TOKEN=dapi123456789...
+spark-submit --class io.github.dwsmith1983.spark.pipeline.runner.SimplePipelineRunner \
+  --master local[1] \
+  your-pipeline.jar
+```
+
+#### Spark Connect Benefits
+
+**Thin Client Deployment:**
+- Client applications don't need full Spark driver dependencies
+- Smaller application JARs and faster deployment
+- Better suited for containerized environments
+
+**Resource Isolation:**
+- Spark driver runs on the server, not the client
+- Client failures don't affect the Spark cluster
+- Multiple clients can share a single Spark Connect server
+
+**Cloud-Native:**
+- Works seamlessly with managed Spark services
+- Supports Databricks, AWS EMR Serverless, and other cloud platforms
+- Simplifies authentication and connection management
+
+#### Version Requirements
+
+- Spark Connect requires **Spark 3.4 or later**
+- The framework automatically detects Spark version at runtime
+- If you use Spark Connect with an earlier version, you'll get a clear error message:
+  ```
+  UnsupportedOperationException: Spark Connect requires Spark 3.4 or later.
+  ```
 
 ## Pipeline Configuration
 

@@ -97,7 +97,9 @@ case class ComponentConfig(
 /**
  * Spark session configuration.
  *
- * Example HOCON:
+ * Supports both local/cluster SparkSessions and Spark Connect remote sessions.
+ *
+ * Example HOCON for local/cluster mode:
  * {{{
  * spark {
  *   master = "yarn"
@@ -110,11 +112,38 @@ case class ComponentConfig(
  * }
  * }}}
  *
- * @param master Spark master URL (local, yarn, spark://host:port)
+ * Example HOCON for Spark Connect mode:
+ * {{{
+ * spark {
+ *   connect-string = "sc://spark-server:15002"
+ *   app-name = "MyPipeline"
+ *   config {
+ *     "spark.executor.memory" = "4g"
+ *   }
+ * }
+ * }}}
+ *
+ * Example HOCON for Databricks Connect:
+ * {{{
+ * spark {
+ *   connect-string = "sc://your-workspace.cloud.databricks.com"
+ *   databricks-token = ${?DATABRICKS_TOKEN}
+ *   app-name = "MyPipeline"
+ * }
+ * }}}
+ *
+ * @param master Spark master URL (local, yarn, spark://host:port).
+ *               Ignored if connectString is set.
  * @param appName Application name shown in Spark UI
  * @param config Additional Spark configuration key-value pairs
+ * @param connectString Spark Connect connection string (sc://host:port).
+ *                      When set, creates a remote Spark Connect session instead of local.
+ * @param databricksToken Optional Databricks authentication token.
+ *                        Used with Databricks Connect. Can reference environment variable.
  */
 case class SparkConfig(
   master: Option[String] = None,
   appName: Option[String] = None,
-  config: Map[String, String] = Map.empty)
+  config: Map[String, String] = Map.empty,
+  connectString: Option[String] = None,
+  databricksToken: Option[String] = None)
