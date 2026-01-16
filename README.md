@@ -104,16 +104,6 @@ spark-submit \
 - [Deployment](https://dwsmith1983.github.io/spark-pipeline-framework/docs/deployment) - Production deployment guides
 - [Contributing](https://dwsmith1983.github.io/spark-pipeline-framework/docs/contributing) - Development setup
 
-## Roadmap
-
-Track progress on [GitHub Milestones](https://github.com/dwsmith1983/spark-pipeline-framework/milestones).
-
-| Version | Status | Focus | Key Features |
-|---------|--------|-------|--------------|
-| **v1.1.0** | Released | Configuration & Streaming | Configuration validation ([#54](https://github.com/dwsmith1983/spark-pipeline-framework/issues/54)), Secrets management ([#57](https://github.com/dwsmith1983/spark-pipeline-framework/issues/57)), Streaming core ([#52](https://github.com/dwsmith1983/spark-pipeline-framework/issues/52)) |
-| **v1.2.0** | Released | Resilience & Contracts | Schema contracts ([#49](https://github.com/dwsmith1983/spark-pipeline-framework/issues/49)), Checkpointing ([#50](https://github.com/dwsmith1983/spark-pipeline-framework/issues/50)), Retry logic ([#55](https://github.com/dwsmith1983/spark-pipeline-framework/issues/55)), Data quality hooks ([#56](https://github.com/dwsmith1983/spark-pipeline-framework/issues/56)) |
-| **v1.3.0** | Released | Streaming Complete | Streaming sources/sinks for Kafka, Kinesis, EventHubs, File, Delta, Iceberg ([#82](https://github.com/dwsmith1983/spark-pipeline-framework/issues/82)) |
-
 ## License
 
 Apache 2.0

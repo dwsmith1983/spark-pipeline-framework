@@ -93,21 +93,6 @@ The framework does **not** support:
 - Dagster
 - Apache Argo Workflows
 
-### Streaming Support
-
-The framework supports **both batch and streaming pipelines** via Spark Structured Streaming integration:
-
-- Streaming sources: Kafka, Kinesis, EventHubs, File, Delta, Iceberg
-- Streaming sinks: Kafka, Kinesis, EventHubs, File, Delta, Iceberg, Console
-- Sequential processing of streaming DataFrames
-- Configuration-driven streaming component definition
-
-See [Streaming](./streaming.md) for details.
-
-**For complex stream processing**, consider:
-- Apache Flink (native streaming engine)
-- Apache Kafka Streams (Kafka-native processing)
-
 ### Optional Schema Contracts
 
 Components can optionally declare input/output schemas via the `SchemaContract` trait. When enabled:
