@@ -25,7 +25,7 @@ val tracedHooks = new LoggingHooks(runId = "trace-abc-123")
 When using structured format (default), logs are emitted as JSON for easy parsing by log aggregators (Splunk, ELK, Datadog):
 
 ```json
-{"event":"pipeline_start","run_id":"abc-123","pipeline_name":"WordCount","component_count":3,"timestamp":"..."}
+{"event":"pipeline_start","run_id":"abc-123","pipeline_name":"SalesDataPipeline","component_count":3,"timestamp":"..."}
 {"event":"component_start","run_id":"abc-123","component_name":"ReadInput","component_index":1,"total_components":3}
 {"event":"component_end","run_id":"abc-123","component_name":"ReadInput","duration_ms":1523,"status":"success"}
 {"event":"pipeline_end","run_id":"abc-123","duration_ms":5000,"status":"success","components_completed":3}
@@ -36,10 +36,10 @@ When using structured format (default), logs are emitted as JSON for easy parsin
 For development, use `LoggingHooks.humanReadable()`:
 
 ```
-[INFO] Pipeline 'WordCount' starting (run_id=abc-123, components=3)
+[INFO] Pipeline 'SalesDataPipeline' starting (run_id=abc-123, components=3)
 [INFO] [1/3] Starting 'ReadInput'
 [INFO] [1/3] Completed 'ReadInput' in 1523ms
-[INFO] Pipeline 'WordCount' completed in 5000ms (run_id=abc-123)
+[INFO] Pipeline 'SalesDataPipeline' completed in 5000ms (run_id=abc-123)
 ```
 
 ### Features
