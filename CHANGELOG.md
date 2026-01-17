@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.4.0](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.3.2...v1.4.0) (2026-01-17)
+
+
+### Features
+
+* add Spark Connect support for remote connectivity ([#94](https://github.com/dwsmith1983/spark-pipeline-framework/issues/94)) ([c29d9eb](https://github.com/dwsmith1983/spark-pipeline-framework/commit/c29d9eb))
+  - SparkConnector trait with Local and SparkConnect implementations
+  - Support for Databricks Connect with token authentication
+  - Backward compatible with Spark < 3.4
+  - Automatic mode selection based on connect-string configuration
+
+### Infrastructure
+
+* switch from release-please to tag-based releases ([#93](https://github.com/dwsmith1983/spark-pipeline-framework/issues/93)) ([59b59fc](https://github.com/dwsmith1983/spark-pipeline-framework/commit/59b59fc))
+
+### Documentation
+
+* update documentation post-DAG removal and streaming completion ([2806e2a](https://github.com/dwsmith1983/spark-pipeline-framework/commit/2806e2a))
+* emphasize batch AND streaming in philosophy and comparison ([1c1860e](https://github.com/dwsmith1983/spark-pipeline-framework/commit/1c1860e))
+* remove roadmap section and streaming justification ([23b12fb](https://github.com/dwsmith1983/spark-pipeline-framework/commit/23b12fb))
+
 ## [1.3.2](https://github.com/dwsmith1983/spark-pipeline-framework/compare/v1.3.1...v1.3.2) (2026-01-13)
 
 
