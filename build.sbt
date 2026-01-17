@@ -289,7 +289,9 @@ lazy val example = (projectMatrix in file("example"))
     commonSettings,
     publish / skip := true,
     // Exclude demo/example files from coverage - runnable demos with main() don't need coverage
-    coverageExcludedFiles := ".*Demo.*Pipeline.*;.*Demo.*Hooks.*;.*ValidationDemo.*;.*FailingComponent.*;.*Example.*"
+    coverageExcludedFiles := ".*Demo.*Pipeline.*;.*Demo.*Hooks.*;.*ValidationDemo.*;.*FailingComponent.*;.*Example.*",
+    // Disable coverage minimum for examples - these are demonstrations, not production code
+    coverageFailOnMinimum := false
   )
   .customRow(
     scalaVersions = Seq(scala212),

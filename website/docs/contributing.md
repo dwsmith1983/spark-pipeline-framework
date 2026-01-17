@@ -71,52 +71,46 @@ sbt scalafixAll
 sbt dependencyCheck
 ```
 
-## Running the Demo
+## Running the Examples
 
-The example module includes a complete end-to-end demo:
+The example module includes comprehensive demonstrations:
+
+### Canonical Batch Example
 
 ```bash
 # Build the example JAR
 sbt examplespark3/package
 
-# Run with spark-submit
+# Run the canonical batch pipeline example
 spark-submit \
-  --class io.github.dwsmith1983.pipelines.DemoPipeline \
+  --class io.github.dwsmith1983.pipelines.BatchPipelineExample \
   --master "local[*]" \
   example/target/spark3-jvm-2.13/spark-pipeline-example-spark3_2.13-<version>.jar
 ```
 
-The demo will:
-1. Create sample text data
-2. Run a multi-component word analysis pipeline
-3. Display real-time progress via logging hooks
-4. Generate a metrics report showing component timings
+The BatchPipelineExample demonstrates:
+1. Sales data ETL with transformations
+2. Aggregation with group-by operations
+3. Data enrichment through joins
+4. Multi-component pipeline orchestration
+5. Lifecycle hooks and metrics collection
 
-### Sample Output
+### Canonical Streaming Example
 
-```
-======================================================================
-  SPARK PIPELINE FRAMEWORK - END-TO-END DEMO
-======================================================================
-
-[SETUP] Creating sample input data...
-[RUNNING] Executing pipeline with composed hooks...
-
-[PIPELINE START] Word Analysis Pipeline (2 components)
-  [1/2] Starting: WordCount(all words)
-  [1/2] Completed: WordCount(all words) (1842ms)
-  [2/2] Starting: WordCount(frequent words only)
-  [2/2] Completed: WordCount(frequent words only) (211ms)
-
-[PIPELINE COMPLETE] 2 components executed in 2395ms
-======================================================================
+```bash
+# Run the canonical streaming pipeline example
+spark-submit \
+  --class io.github.dwsmith1983.pipelines.StreamingPipelineExample \
+  --master "local[*]" \
+  example/target/spark3-jvm-2.13/spark-pipeline-example-spark3_2.13-<version>.jar
 ```
 
 See `example/src/main/scala/io/github/dwsmith1983/pipelines/` for:
-- `WordCount.scala` - Example component
-- `DemoMetricsHooks.scala` - Simple in-memory metrics (for learning/demos)
-- `DemoPipeline.scala` - End-to-end runnable demo with metrics
+- `BatchPipelineExample.scala` - **Canonical batch processing example**
+- `StreamingPipelineExample.scala` - **Canonical streaming pipeline example**
 - `DemoAuditPipeline.scala` - Audit trail demo with security filtering
+- `ValidationDemo.scala` - Error handling and validation demo
+- `DemoMetricsHooks.scala` - Simple in-memory metrics (for learning/demos)
 
 ## Project Structure
 

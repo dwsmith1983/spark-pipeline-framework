@@ -63,7 +63,7 @@ spark-pipeline-framework/
 ├── core/           # Config models, traits (no Spark dependency)
 ├── runtime/        # SparkSession management, DataFlow trait
 ├── runner/         # SimplePipelineRunner entry point
-├── example/        # Reference implementations (WordCount, etc.)
+├── example/        # Canonical examples (BatchPipelineExample, StreamingPipelineExample)
 └── project/        # SBT build configuration
 ```
 

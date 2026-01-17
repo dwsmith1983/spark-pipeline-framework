@@ -28,17 +28,18 @@ import com.typesafe.config.Config
 import pureconfig._
 import pureconfig.generic.auto._
 
-object WordCount extends ConfigurableInstance {
+object DataTransform extends ConfigurableInstance {
   // Type-safe configuration case class
   case class Config(
     inputPath: String,
     outputPath: String,
-    minCount: Int = 1
+    filterColumn: String,
+    filterValue: String
   )
 
-  override def createFromConfig(conf: Config): WordCount = {
+  override def createFromConfig(conf: Config): DataTransform = {
     val config = ConfigSource.fromConfig(conf).loadOrThrow[Config]
-    new WordCount(config)
+    new DataTransform(config)
   }
 }
 ```
@@ -50,22 +51,19 @@ The class extends `DataFlow` and implements the `run()` method:
 ```scala
 import io.github.dwsmith1983.spark.pipeline.runtime.DataFlow
 
-class WordCount(conf: WordCount.Config) extends DataFlow {
+class DataTransform(conf: DataTransform.Config) extends DataFlow {
 
   override def run(): Unit = {
     logger.info(s"Reading from ${conf.inputPath}")
 
-    val words = spark.read.textFile(conf.inputPath)
-      .flatMap(_.split("\\s+"))
-      .filter(_.nonEmpty)
-      .groupBy("value")
-      .count()
-      .filter($"count" >= conf.minCount)
+    val data = spark.read.parquet(conf.inputPath)
+      .filter(col(conf.filterColumn) === conf.filterValue)
+      .select("id", "name", "timestamp")
 
     logger.info(s"Writing to ${conf.outputPath}")
-    words.write.mode("overwrite").parquet(conf.outputPath)
+    data.write.mode("overwrite").parquet(conf.outputPath)
 
-    logger.info(s"Completed with ${words.count()} words")
+    logger.info(s"Completed with ${data.count()} records")
   }
 }
 ```
@@ -76,17 +74,20 @@ class WordCount(conf: WordCount.Config) extends DataFlow {
 pipeline {
   pipeline-components = [
     {
-      instance-type = "com.example.WordCount"
-      instance-name = "WordCount(articles)"
+      instance-type = "com.example.DataTransform"
+      instance-name = "FilterActiveUsers"
       instance-config {
-        input-path = "/data/articles/*.txt"
-        output-path = "/data/wordcounts"
-        min-count = 5
+        input-path = "/data/users"
+        output-path = "/data/active_users"
+        filter-column = "status"
+        filter-value = "active"
       }
     }
   ]
 }
 ```
+
+> **See Also**: For complete, runnable examples, refer to [BatchPipelineExample](https://github.com/dwsmith1983/spark-pipeline-framework/blob/main/example/src/main/scala/io/github/dwsmith1983/pipelines/BatchPipelineExample.scala) which demonstrates ETL, aggregation, and enrichment patterns.
 
 ## SparkSession Access
 
@@ -213,26 +214,34 @@ The framework captures exceptions and reports them via [lifecycle hooks](./hooks
 import org.scalatest.flatspec.AnyFlatSpec
 import org.apache.spark.sql.SparkSession
 
-class WordCountSpec extends AnyFlatSpec {
+class DataTransformSpec extends AnyFlatSpec {
   implicit val spark: SparkSession = SparkSession.builder()
     .master("local[*]")
     .appName("test")
     .getOrCreate()
 
-  "WordCount" should "count words correctly" in {
+  "DataTransform" should "filter data correctly" in {
     val tempDir = Files.createTempDirectory("test")
-    val inputPath = tempDir.resolve("input.txt")
+    val inputPath = tempDir.resolve("input")
     val outputPath = tempDir.resolve("output")
 
-    Files.write(inputPath, "hello world hello".getBytes)
+    // Create test data
+    import spark.implicits._
+    val testData = Seq(
+      ("1", "Alice", "active"),
+      ("2", "Bob", "inactive"),
+      ("3", "Charlie", "active")
+    ).toDF("id", "name", "status")
+    testData.write.parquet(inputPath.toString)
 
-    val config = WordCount.Config(
+    val config = DataTransform.Config(
       inputPath = inputPath.toString,
       outputPath = outputPath.toString,
-      minCount = 1
+      filterColumn = "status",
+      filterValue = "active"
     )
 
-    val component = new WordCount(config)
+    val component = new DataTransform(config)
     component.run()
 
     val result = spark.read.parquet(outputPath.toString)
