@@ -8,6 +8,12 @@
 
 A configuration-driven framework for building Spark pipelines with HOCON config files and PureConfig.
 
+> **Python/PySpark users** may also be interested in
+> [pyspark-pipeline-framework](https://github.com/dwsmith1983/pyspark-pipeline-framework),
+> the Python implementation of this framework using dataconf and HOCON.
+> You can find it on [GitHub](https://github.com/dwsmith1983/pyspark-pipeline-framework)
+> and [PyPI](https://pypi.org/project/pyspark-pipeline-framework/).
+
 ## Features
 
 - **Type-safe configuration** via PureConfig with automatic case class binding
