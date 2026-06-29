@@ -14,7 +14,7 @@ jobs:
     outputs:
       code: ${{ steps.filter.outputs.code }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -62,7 +62,7 @@ jobs:
     if: ${{ !startsWith(github.head_ref, 'release-please') && needs.changes.outputs.code == 'true' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -85,7 +85,7 @@ jobs:
     if: ${{ !startsWith(github.head_ref, 'release-please') && needs.changes.outputs.code == 'true' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -99,7 +99,7 @@ jobs:
 
       # Restore NVD database from main branch cache
       - name: Restore OWASP NVD Database
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: .owasp-data
           key: owasp-nvd-v1
@@ -134,7 +134,7 @@ jobs:
 
       # Only save cache on main to avoid PR-level caches
       - name: Save OWASP NVD Database
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           path: .owasp-data
@@ -161,7 +161,7 @@ jobs:
             coverage-cmd: sbt "project core" coverageAggregate
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Java
         uses: actions/setup-java@v5
